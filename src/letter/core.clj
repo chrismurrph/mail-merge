@@ -10,10 +10,12 @@
 (def addresses-file-name "addresses.txt")
 (def windmills-file-name "Another_Advert.jpg")
 (def output-dir "output")
+(def sender-address ["Chris Murphy" "P.O. Box 20" "Adelaide SA 5000"])
 
 (defn write-pdf-file [letter file-name]
   (pdf/pdf
-    [{}
+    [{:top-margin    5
+      :bottom-margin 5}
      letter]
     file-name))
 
@@ -28,7 +30,7 @@
 (defn blank-line? [x]
   (= "" (first x)))
 
-(defn get-addresses [file-name]
+(defn get-contacts [file-name]
   (let [address-lines (-> file-name io/resource io/reader line-seq)]
     (->> address-lines
          (partition-by #(= % ""))
@@ -53,10 +55,12 @@
            (u/insert-at 0 para)))))
 
 (defn left-right-addresses [l r]
-  (fn [paragraphs]
-    (->> paragraphs
-         (u/insert-at 0 [:spacer])
-         (u/insert-at 0 (c/create-table)))))
+  (let [transposed (mapv vector l r)]
+    ;(println transposed)
+    (fn [paragraphs]
+      (->> paragraphs
+           (u/insert-at 0 [:spacer])
+           (u/insert-at 0 (c/create-addrs l r))))))
 
 (defn x-1 []
   (let [insert-img-fn (insert-image windmills-file-name)
@@ -66,16 +70,17 @@
                         line-seq
                         (mapv c/create-spaced-paragraph)
                         insert-img-fn)
-        addresses (take 1 (get-addresses addresses-file-name))]
-    (doseq [address addresses]
-      (let [formal-intro-fn (dear-sir address)
-            address-headers-fn (left-right-addresses :a :b)
-            file-name (address->file-name address)
+        contacts (take 1 (get-contacts addresses-file-name))]
+    (doseq [{:keys [first-name second-name address] :as contact-info} contacts]
+      (let [formal-intro-fn (dear-sir contact-info)
+            to-address (into [(str first-name " " second-name)] address)
+            address-headers-fn (left-right-addresses to-address sender-address)
+            file-name (address->file-name contact-info)
             letter (-> paragraphs
                        formal-intro-fn
                        address-headers-fn)]
         (write-pdf-file letter (str output-dir "/" file-name))))
-    (str "Written " (count addresses) " pdf files")))
+    (str "Written " (count contacts) " pdf files")))
 
 (defn x-2 []
   (pdf/pdf

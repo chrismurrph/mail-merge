@@ -6,7 +6,7 @@
    (binding [pp/*print-right-margin* n]
      (-> x clojure.pprint/pprint)))
   ([x]
-   (pp 200 x)))
+   (pp 100 x)))
 
 (defn probe-off
   ([x]
