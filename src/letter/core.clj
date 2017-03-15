@@ -2,18 +2,19 @@
   (:require
     [clj-pdf.core :as pdf]
     [clojure.java.io :as io]
-    [utils :as u]
-    [clojure.string :as s]))
+    [clojure.string :as s]
+    [letter.utils :as u]
+    [letter.common :as c]))
 
 (def letter-file-name "merge_letter.txt")
 (def addresses-file-name "addresses.txt")
 (def windmills-file-name "Another_Advert.jpg")
 (def output-dir "output")
 
-(defn write-pdf-file [paragraphs file-name]
+(defn write-pdf-file [letter file-name]
   (pdf/pdf
     [{}
-     paragraphs]
+     letter]
     file-name))
 
 (defn make-address [[first-name second-name address]]
@@ -34,22 +35,28 @@
          (remove blank-line?)
          (map make-address))))
 
-(defn create-paragraph [paragraph-text]
-  [:paragraph
-   [:chunk paragraph-text]
-   [:spacer]])
-
-;;
-;; x to be inserted at n in vector v
-;;
-(defn insert-at [n x v]
-  (vec (concat (subvec v 0 n) (vector x) (subvec v n))))
-
 (defn insert-image [image-file-name]
   (fn [paragraphs]
     ;(println paragraphs)
     (assert (vector? paragraphs))
-    (insert-at 1 [:image (-> image-file-name io/resource)] paragraphs)))
+    (u/insert-at 1 [:image {:xscale 0.8
+                            :yscale 0.8
+                            :align  :center}
+                    (-> image-file-name io/resource)]
+                 paragraphs)))
+
+(defn dear-sir [{:keys [first-name second-name]}]
+  (fn [paragraphs]
+    (let [para (c/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
+      ;(u/pp paragraphs)
+      (->> paragraphs
+           (u/insert-at 0 para)))))
+
+(defn left-right-addresses [l r]
+  (fn [paragraphs]
+    (->> paragraphs
+         (u/insert-at 0 [:spacer])
+         (u/insert-at 0 (c/create-table)))))
 
 (defn x-1 []
   (let [insert-img-fn (insert-image windmills-file-name)
@@ -57,13 +64,17 @@
                         io/resource
                         io/reader
                         line-seq
-                        (mapv create-paragraph)
+                        (mapv c/create-spaced-paragraph)
                         insert-img-fn)
         addresses (take 1 (get-addresses addresses-file-name))]
-    ;(println addresses)
     (doseq [address addresses]
-      (let [file-name (address->file-name address)]
-        (write-pdf-file paragraphs (str output-dir "/" file-name))))
+      (let [formal-intro-fn (dear-sir address)
+            address-headers-fn (left-right-addresses :a :b)
+            file-name (address->file-name address)
+            letter (-> paragraphs
+                       formal-intro-fn
+                       address-headers-fn)]
+        (write-pdf-file letter (str output-dir "/" file-name))))
     (str "Written " (count addresses) " pdf files")))
 
 (defn x-2 []
