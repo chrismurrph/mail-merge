@@ -1,5 +1,5 @@
 (ns letter.common
-  (:require [letter.utils :as u]))
+  (:require [common.utils :as u]))
 
 (defn create-spaced-paragraph [text]
   [:paragraph

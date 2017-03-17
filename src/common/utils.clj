@@ -1,5 +1,12 @@
-(ns letter.utils
-  (:require [clojure.pprint :as pp]))
+(ns common.utils
+  (:require [clojure.pprint :as pp]
+            [clojure.java.io :as io]))
+
+(defn file-name->lines [file-name]
+  (->> file-name
+       io/resource
+       io/reader
+       line-seq))
 
 (defn pp
   ([n x]

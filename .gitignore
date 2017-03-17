@@ -16,3 +16,6 @@ pom.xml.asc
 *.txt
 *.jpg
 *.pdf
+cv-*.md
+merge_letter.md
+*.png

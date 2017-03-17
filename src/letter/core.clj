@@ -3,7 +3,7 @@
     [clj-pdf.core :as pdf]
     [clojure.java.io :as io]
     [clojure.string :as s]
-    [letter.utils :as u]
+    [common.utils :as u]
     [letter.common :as c]))
 
 (def letter-file-name "merge_letter.txt")
@@ -30,12 +30,11 @@
 (defn blank-line? [x]
   (= "" (first x)))
 
-(defn get-contacts [file-name]
-  (let [address-lines (-> file-name io/resource io/reader line-seq)]
-    (->> address-lines
-         (partition-by #(= % ""))
-         (remove blank-line?)
-         (map make-address))))
+(defn get-contacts [address-lines]
+  (->> address-lines
+       (partition-by #(= % ""))
+       (remove blank-line?)
+       (map make-address)))
 
 (defn insert-image [image-file-name]
   (fn [paragraphs]
@@ -65,12 +64,10 @@
 (defn x-1 []
   (let [insert-img-fn (insert-image windmills-file-name)
         paragraphs (->> letter-file-name
-                        io/resource
-                        io/reader
-                        line-seq
+                        u/file-name->lines
                         (mapv c/create-spaced-paragraph)
                         insert-img-fn)
-        contacts (take 1 (get-contacts addresses-file-name))]
+        contacts (take 1 (get-contacts (u/file-name->lines addresses-file-name)))]
     (doseq [{:keys [first-name second-name address] :as contact-info} contacts]
       (let [formal-intro-fn (dear-sir contact-info)
             to-address (into [(str first-name " " second-name)] address)
