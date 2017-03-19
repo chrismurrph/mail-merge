@@ -20,6 +20,22 @@
     file-name))
 
 (def cell-props {:valign :middle :align :left})
+(def top-props {:valign :top :align :left})
+
+(defn create-contacts-table [contact-links]
+  #_[:paragraph (first contact-links)]
+  [:pdf-table
+     {:width-percent 100
+      :cell-border   false}
+     [1 1]
+     [[:pdf-cell top-props [:paragraph (first contact-links)]]
+      [:pdf-cell top-props [:paragraph (second contact-links)]]]]
+  #_[:pdf-table
+   {:width-percent 100
+    :cell-border   false}
+   (vec (take (count contact-links) (repeat 1)))
+   (mapv (fn [link] (u/probe-on (into [:paragraph] link))) contact-links)]
+  )
 
 (defn create-intro [name contacts address keywords]
   (assert (string? contacts))
@@ -35,7 +51,7 @@
      [1 5]
      [[:pdf-cell cell-props "Name"] [:pdf-cell cell-props name]]
      ;[[:pdf-cell cell-props "DOB"] [:pdf-cell cell-props dob]]
-     [[:pdf-cell cell-props "Contact links"] [:pdf-cell cell-props [:paragraph (first contact-links)]]]
+     [[:pdf-cell cell-props "Contact links"] [:pdf-cell cell-props (create-contacts-table contact-links)]]
      [[:pdf-cell cell-props "Address"] [:pdf-cell cell-props address]]
      [[:pdf-cell cell-props "Experience"] [:pdf-cell cell-props keywords]]
      ]))
