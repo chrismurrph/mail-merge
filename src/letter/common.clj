@@ -1,15 +1,6 @@
 (ns letter.common
   (:require [common.utils :as u]))
 
-(defn create-spaced-paragraph [text]
-  [:paragraph
-   [:chunk text]
-   [:spacer]])
-
-(defn create-close-paragraph [text]
-  [:paragraph
-   [:chunk text]])
-
 (defn create-addr-rows [l r]
   (let [len (max (count l) (count r))]
     (for [n (range len)]

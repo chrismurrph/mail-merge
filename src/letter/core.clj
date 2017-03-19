@@ -4,7 +4,8 @@
     [clojure.java.io :as io]
     [clojure.string :as s]
     [common.utils :as u]
-    [letter.common :as c]))
+    [letter.common :as c]
+    [common.common :as cc]))
 
 (def letter-file-name "merge_letter.txt")
 (def addresses-file-name "addresses.txt")
@@ -48,7 +49,7 @@
 
 (defn dear-sir [{:keys [first-name second-name]}]
   (fn [paragraphs]
-    (let [para (c/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
+    (let [para (cc/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
       ;(u/pp paragraphs)
       (->> paragraphs
            (u/insert-at 0 para)))))
@@ -65,7 +66,7 @@
   (let [insert-img-fn (insert-image windmills-file-name)
         paragraphs (->> letter-file-name
                         u/file-name->lines
-                        (mapv c/create-spaced-paragraph)
+                        (mapv cc/create-spaced-paragraph)
                         insert-img-fn)
         contacts (take 1 (get-contacts (u/file-name->lines addresses-file-name)))]
     (doseq [{:keys [first-name second-name address] :as contact-info} contacts]

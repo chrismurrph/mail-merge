@@ -2,6 +2,8 @@
   (:require [clojure.pprint :as pp]
             [clojure.java.io :as io]))
 
+(def third #(nth % 2))
+
 (defn file-name->lines [file-name]
   (->> file-name
        io/resource
