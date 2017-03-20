@@ -23,9 +23,13 @@
 (def cell-props {:valign :top :align :left})
 (def top-props {:valign :top :align :center})
 
+;;
+;; Only the Github link actually works. No time to fix this (or put pictures)
+;;
 (defn short-version [contact-str]
   (cond
-    (clojure.string/index-of contact-str "stackoverflow") "StackOverflow"
+    (or (clojure.string/index-of contact-str "stackexchange")
+        (clojure.string/index-of contact-str "stackoverflow")) "StackOverflow"
     (clojure.string/index-of contact-str "github") "GitHub"
     (clojure.string/index-of contact-str "linkedin") "LinkedIn"
     :default contact-str))
@@ -56,8 +60,13 @@
 
 (defn create-intro [name contacts address keywords libs]
   (assert (string? contacts))
-  (let [contact-links (mapv (fn [contact]
-                              [:anchor {:target contact} (short-version contact)]) (s/split contacts #","))]
+  (let [details (s/split contacts #",")
+        links (->> details
+                   (map read-string)
+                   (map (juxt (comp str first) (comp str second))))
+        _ (println "links: " links)
+        contact-links (mapv (fn [[link user-id]]
+                              [:anchor {:target link} (str (short-version link) " (" user-id ")")]) links)]
     (println contact-links)
     [:pdf-table {
                  ;:cell-border  true
@@ -79,24 +88,32 @@
    [9 2]
    [(create-intro name contact-links address keywords libs) (c/image-here image-file-name 30)]])
 
+(defn create-job-row [{:keys [month-from year-from month-to year-to org position]}]
+  (assert (string? month-to))
+  [[:pdf-cell cell-props month-from]
+   [:pdf-cell cell-props (str year-from)]
+   [:pdf-cell cell-props month-to]
+   [:pdf-cell cell-props (str year-to)]
+   [:pdf-cell cell-props org]
+   [:pdf-cell cell-props position]])
+
 (defn jobs-table [jobs]
-  [:pdf-table
-   {:width-percent 100
-    :cell-border   true}
-   [1 1]
-   [[:pdf-cell cell-props "Name"] [:pdf-cell cell-props "More"]]])
+  (into [:pdf-table
+         {:width-percent 100
+          :cell-border   true}
+         [1 1 1 1 4 7]]
+        (mapv create-job-row jobs)))
 
 (defn insert-paragraphs [paragraphs existing]
   (vec (concat paragraphs existing)))
 
-(defn intro-data [[name contact-links address keywords libs] jobs paragraphs]
-  (fn []
-    (->> []
-         (u/insert-at 0 (jobs-table jobs))
-         (insert-paragraphs paragraphs)
-         (u/insert-at 0 [:spacer])
-         (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))
-         )))
+(defn make-cv [[name contact-links address keywords libs] jobs paragraphs]
+  (->> []
+       (u/insert-at 0 (jobs-table jobs))
+       (insert-paragraphs paragraphs)
+       (u/insert-at 0 [:spacer])
+       (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))
+       ))
 
 (defn get-jobs []
   (read-string (slurp (io/resource "cv-jobs.edn"))))
@@ -107,8 +124,7 @@
                         (mapv cc/create-spaced-paragraph))
         summary-info (->> cv-summary-in-file-name
                           u/file-name->lines)]
-    (let [intro-data-fn (intro-data summary-info (get-jobs) paragraphs)
-          letter (intro-data-fn)
+    (let [cv (make-cv summary-info (get-jobs) paragraphs)
           out-file-path (str output-dir "/" cv-out-file-name)]
-      (write-pdf-file letter out-file-path)
+      (write-pdf-file cv out-file-path)
       (str "Written " out-file-path " CV file"))))
