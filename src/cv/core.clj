@@ -10,8 +10,6 @@
 (def cv-summary-in-file-name "cv-summary-info.txt")
 (def cv-jobs-in-file-name "cv-jobs.edn")
 (def cv-misc-in-file-name "cv-misc.edn")
-;(def cv-me-file-name "me_thin.png")
-;(def cv-out-file-name "ChrisMurphyCV.pdf")
 (def output-dir "output")
 
 (defn write-pdf-file [cv file-name]
@@ -73,10 +71,8 @@
         links (->> details
                    (map read-string)
                    (map (juxt (comp str first) (comp str second))))
-        ;_ (println "links: " links)
         contact-links (mapv (fn [[link user-id]]
                               [:anchor {:target link} (str (short-version link) " (" user-id ")")]) links)]
-    ;(println contact-links)
     [:pdf-table {
                  ;:cell-border  true
                  ;:horizontal-align :left
