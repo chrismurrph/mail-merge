@@ -40,3 +40,6 @@
 (defn insert-at [n x v]
   (vec (concat (subvec v 0 n) (vector x) (subvec v n))))
 
+(defn get-edn [file-name]
+  (read-string (slurp (io/resource file-name))))
+

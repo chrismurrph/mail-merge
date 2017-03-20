@@ -9,13 +9,14 @@
 (def cv-in-file-name "cv-paragraphs.md")
 (def cv-summary-in-file-name "cv-summary-info.txt")
 (def cv-jobs-in-file-name "cv-jobs.edn")
-(def cv-me-file-name "me_thin.png")
-(def cv-out-file-name "ChrisMurphyCV.pdf")
+(def cv-misc-in-file-name "cv-misc.edn")
+;(def cv-me-file-name "me_thin.png")
+;(def cv-out-file-name "ChrisMurphyCV.pdf")
 (def output-dir "output")
 
 (defn write-pdf-file [cv file-name]
   (pdf/pdf
-    [{:pages true
+    [{:pages         true
       :top-margin    25
       :bottom-margin 30}
      cv]
@@ -115,28 +116,22 @@
 (defn insert-paragraphs [paragraphs existing]
   (vec (concat paragraphs existing)))
 
-(defn make-cv [[name contact-links address keywords libs] jobs paragraphs]
+(defn make-cv [[name contact-links address keywords libs] jobs paragraphs cv-me-file-name]
   (->> []
        (u/insert-at 0 (jobs-table jobs))
        (insert-paragraphs paragraphs)
        (u/insert-at 0 [:spacer])
-       (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))
-       ))
-
-(defn get-jobs []
-  (read-string (slurp (io/resource "cv-jobs.edn"))))
-
-;; http://www.seasoft.com.au/atmosphere/
-(def atmosphere-link "http://www.seasoft.com.au/atmosphere/")
+       (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))))
 
 (defn produce-cv []
   (let [paragraphs' (->> cv-in-file-name
-                        u/file-name->lines
-                        (mapv cc/create-spaced-paragraph))
-        paragraphs (->> paragraphs' (u/insert-at 3 [:paragraph [:anchor {:target atmosphere-link} atmosphere-link] [:spacer]]))
+                         u/file-name->lines
+                         (mapv cc/create-spaced-paragraph))
+        {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn cv-misc-in-file-name)
+        paragraphs (->> paragraphs' (u/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor {:target coy-website} coy-link-title] [:spacer]]))
         summary-info (->> cv-summary-in-file-name
                           u/file-name->lines)]
-    (let [cv (make-cv summary-info (get-jobs) paragraphs)
-          out-file-path (str output-dir "/" cv-out-file-name)]
+    (let [cv (make-cv summary-info (u/get-edn cv-jobs-in-file-name) paragraphs personal-picture)
+          out-file-path (str output-dir "/" result-pdf)]
       (write-pdf-file cv out-file-path)
       (str "Written " out-file-path " CV file"))))
