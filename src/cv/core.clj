@@ -86,13 +86,17 @@
    [1 1]
    [[:pdf-cell cell-props "Name"] [:pdf-cell cell-props "More"]]])
 
+(defn insert-paragraphs [paragraphs existing]
+  (vec (concat paragraphs existing)))
+
 (defn intro-data [[name contact-links address keywords libs] jobs paragraphs]
   (fn []
-    (->> paragraphs
-         ;(u/insert-at 0 paragraphs)
+    (->> []
          (u/insert-at 0 (jobs-table jobs))
+         (insert-paragraphs paragraphs)
          (u/insert-at 0 [:spacer])
-         (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name)))))
+         (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))
+         )))
 
 (defn get-jobs []
   (read-string (slurp (io/resource "cv-jobs.edn"))))

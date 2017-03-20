@@ -3,6 +3,8 @@
             [clojure.java.io :as io]))
 
 (def third #(nth % 2))
+(def fourth #(nth % 3))
+(def fifth #(nth % 4))
 
 (defn file-name->lines [file-name]
   (->> file-name
