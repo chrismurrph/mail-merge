@@ -37,6 +37,9 @@
     (s/index-of contact-str "clojurians") "Clojurians Slack"
     :default contact-str))
 
+(defn top [props]
+  (assoc props :valign :top))
+
 ;;
 ;; Works but going to take too much time with every image being a slightly different size
 ;;
@@ -46,10 +49,10 @@
      {:width-percent 100
       :cell-border   false}
      [1 15]
-     [[:pdf-cell middle-props (img-fn "github-2.png" 1.6 0 -3)] [:pdf-cell middle-left-props [:paragraph (first contact-links)]]]
-     [[:pdf-cell middle-props (img-fn "apple-touch-icon.png" 11)] [:pdf-cell middle-left-props [:paragraph (second contact-links)]]]
-     [[:pdf-cell middle-props (img-fn "linkedin-button.png" 7 2 0)] [:pdf-cell middle-left-props [:paragraph (u/third contact-links)]]]
-     [[:pdf-cell middle-props (img-fn "slack.png" 3 -3)] [:pdf-cell middle-left-props [:paragraph (u/fourth contact-links)]]]
+     [[:pdf-cell (top middle-props) (img-fn "github-2.png" 1.6 0)] [:pdf-cell (top middle-left-props) [:paragraph (first contact-links)]]]
+     [[:pdf-cell (top middle-props) (img-fn "apple-touch-icon.png" 11 0 1)] [:pdf-cell (top middle-left-props) [:paragraph (second contact-links)]]]
+     [[:pdf-cell (top middle-props) (img-fn "linkedin-button.png" 7 2 2)] [:pdf-cell (top middle-left-props) [:paragraph (u/third contact-links)]]]
+     [[:pdf-cell (top middle-props) (img-fn "slack.png" 3 -3)] [:pdf-cell (top middle-left-props) [:paragraph (u/fourth contact-links)]]]
      ]))
 
 (defn create-contacts-table-no-images [contact-links]
@@ -79,7 +82,7 @@
                  :width-percent 100
                  }
      [1 5]
-     [[:pdf-cell props "Name"] [:pdf-cell props name]]
+     [[:pdf-cell props ""] [:pdf-cell (assoc props :align :center :valign :top) name]]
      [[:pdf-cell cell-props "Links"] [:pdf-cell props (create-contacts-table contact-links)]]
      [[:pdf-cell props "Address"] [:pdf-cell props address]]
      [[:pdf-cell props "Experience"] [:pdf-cell props keywords]]
@@ -118,6 +121,9 @@
        (insert-paragraphs paragraphs)
        (u/insert-at 0 [:spacer])
        (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))))
+
+;(defn formatting-fixes [idx lines]
+;  (update lines idx (cc/italicize)))
 
 (defn produce-cv []
   (let [paragraphs' (->> cv-in-file-name
