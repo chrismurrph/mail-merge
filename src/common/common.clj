@@ -1,4 +1,6 @@
-(ns common.common)
+(ns common.common
+  (:require [clojure.java.io :as io]
+            [common.utils :as u]))
 
 ;;
 ;; Going to turn the chunk that has the word in it into three chunks.
@@ -11,10 +13,34 @@
   (assert (= kw :paragraph))
   paragraph)
 
-(defn create-spaced-paragraph [text]
-  [:paragraph
-   [:chunk text]
-   [:spacer]])
+(defn make-italicized-chunk [text]
+  [:chunk {:style :italic} text])
+
+(defn default-text->chunks [text]
+  [[:chunk text]])
+
+(defn create-spaced-paragraph
+  ([text]
+    (create-spaced-paragraph text default-text->chunks))
+  ([text->chunks text]
+   (conj (into [:paragraph] (text->chunks text)) [:spacer])))
+
+(defn insert-heading [text n]
+  (fn [paragraphs]
+    ;(println paragraphs)
+    (assert (vector? paragraphs))
+    (u/insert-at n [:heading {:style {:size 15}} text]
+                 paragraphs)))
+
+(defn insert-image [image-file-name {:keys [n xscale yscale]}]
+  (fn [paragraphs]
+    ;(println paragraphs)
+    (assert (vector? paragraphs))
+    (u/insert-at n [:image {:xscale xscale
+                            :yscale yscale
+                            :align  :center}
+                    (-> image-file-name io/resource)]
+                 paragraphs)))
 
 (defn create-close-paragraph [text]
   [:paragraph

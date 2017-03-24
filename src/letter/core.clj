@@ -37,16 +37,6 @@
        (remove blank-line?)
        (map make-address)))
 
-(defn insert-image [image-file-name]
-  (fn [paragraphs]
-    ;(println paragraphs)
-    (assert (vector? paragraphs))
-    (u/insert-at 1 [:image {:xscale 0.8
-                            :yscale 0.8
-                            :align  :center}
-                    (-> image-file-name io/resource)]
-                 paragraphs)))
-
 (defn dear-sir [{:keys [first-name second-name]}]
   (fn [paragraphs]
     (let [para (cc/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
@@ -78,7 +68,9 @@
 ;; When make proper function will use all contacts
 ;;
 (defn x-1 []
-  (let [insert-img-fn (insert-image windmills-file-name)
+  (let [insert-img-fn (cc/insert-image windmills-file-name {:n 1
+                                                            :xscale 0.8
+                                                            :yscale 0.8})
         paragraphs (->> letter-file-name
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)

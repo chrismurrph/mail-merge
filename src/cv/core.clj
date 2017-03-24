@@ -122,13 +122,33 @@
        (u/insert-at 0 [:spacer])
        (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))))
 
-;(defn formatting-fixes [idx lines]
-;  (update lines idx (cc/italicize)))
+;;
+;; To do this properly divide your text into a [text-1 text-2].
+;; Actually put each into a vector and give each formatting context, say {:italics ["installed"]}:
+;; [[text-1 {}] [text-2 {"installed" [:italics]}]]
+;; Then this function can be mapcat-ed over
+;; Thus remaining problem is that this function needs to perform many operations.
+;; Really we need a function that takes a vector of chunks and returns same.
+;; Only recursion will handle this. Will search thru the texts of the chunks. For each discard the
+;; chunk and turn it into 3 using this function. Note may do this many times because the word occurs
+;; in multiple places. This is a reduce over the chunks. Actually this reduce can then be reduced over
+;; for every operation.
+;;
+(defn text->chunks [text]
+  (let [search-word "installed"
+        idx (s/index-of text search-word)]
+    (if idx
+      (let [before (subs text 0 idx)
+            after (subs text (+ idx (count search-word)))]
+        [[:chunk before] (cc/make-italicized-chunk search-word) [:chunk after]])
+      [[:chunk text]])))
 
 (defn produce-cv []
-  (let [paragraphs' (->> cv-in-file-name
+  (let [insert-heading-fn (cc/insert-heading "Some Heading" 1)
+        paragraphs' (->> cv-in-file-name
                          u/file-name->lines
-                         (mapv cc/create-spaced-paragraph))
+                         (mapv (partial cc/create-spaced-paragraph text->chunks))
+                         insert-heading-fn)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn cv-misc-in-file-name)
         paragraphs (->> paragraphs' (u/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor {:target coy-website} coy-link-title] [:spacer]]))
         summary-info (->> cv-summary-in-file-name
