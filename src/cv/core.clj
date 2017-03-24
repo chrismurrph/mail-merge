@@ -37,6 +37,12 @@
     (s/index-of contact-str "clojurians") "Clojurians Slack"
     :default contact-str))
 
+(defn long-version [found-str]
+  (case found-str
+    "@atroche" "https://clojurians.slack.com/messages/search/atroche/"
+    "@luxbock" "https://clojurians.slack.com/messages/C0PULSD25/search/luxbock/"
+    (assert false (str "No match for: " found-str))))
+
 (defn top [props]
   (assoc props :valign :top))
 
@@ -67,12 +73,6 @@
 
 (def create-contacts-table create-contacts-table-with-images)
 
-;; 51,102,187
-(def anchor-attributes-1 {:style {:style :underline
-                                  :color [51 102 187]}})
-(def anchor-attributes-2 {:color [51 102 187]})
-(def anchor-attributes anchor-attributes-1)
-
 (defn create-intro [name contacts address keywords libs]
   (assert (string? contacts))
   (let [props middle-left-props
@@ -81,17 +81,17 @@
                    (map read-string)
                    (map (juxt (comp str first) (comp str second))))
         contact-links (mapv (fn [[link user-id]]
-                              [:anchor (assoc anchor-attributes :target link) (str (short-version link) " (" user-id ")")]) links)]
+                              [:anchor (assoc cc/anchor-attributes :target link) (str (short-version link) " (" user-id ")")]) links)]
     [:pdf-table {
                  ;:cell-border  true
                  ;:horizontal-align :left
                  :width-percent 100
                  }
      [1 5]
-     [[:pdf-cell props ""] [:pdf-cell {:align :center
+     [[:pdf-cell props ""] [:pdf-cell {:align  :center
                                        :valign :top
-                                       :style :bold
-                                       :size cc/bigger
+                                       :style  :bold
+                                       :size   cc/bigger
                                        :height 25} name]]
      [[:pdf-cell cell-props "Links"] [:pdf-cell props (create-contacts-table contact-links)]]
      [[:pdf-cell props "Address"] [:pdf-cell props address]]
@@ -145,14 +145,14 @@
 ;; in multiple places. This is a reduce over the chunks. Actually this reduce can then be reduced over
 ;; for every operation.
 ;;
-(defn text->chunks [text]
-  (let [search-word "installed"
-        idx (s/index-of text search-word)]
-    (if idx
+(defn text->chunks [[{:keys [search-word op]} & tail] text]
+  (if search-word
+    (if-let [idx (s/index-of text search-word)]
       (let [before (subs text 0 idx)
             after (subs text (+ idx (count search-word)))]
-        [[:chunk before] (cc/make-italicized-chunk search-word) [:chunk after]])
-      [[:chunk text]])))
+        [[:chunk before] (op search-word) [:chunk after]])
+      (text->chunks tail text))
+    [[:chunk text]]))
 
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading "Clojure" 0)
@@ -161,8 +161,13 @@
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn cv-misc-in-file-name)
         paragraphs (->> cv-in-file-name
                         u/file-name->lines
-                        (mapv (partial cc/create-spaced-paragraph text->chunks))
-                        (u/insert-at 4 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc anchor-attributes :target coy-website) coy-link-title] [:spacer]])
+                        (mapv (partial cc/create-spaced-paragraph
+                                       (partial text->chunks
+                                                [{:search-word "installed" :op cc/make-italicized-chunk}
+                                                 ;; My code works if stick to one of these. Real problem is links don't work
+                                                 #_{:search-word "@atroche" :op (cc/anchor-text->chunk long-version)}
+                                                 #_{:search-word "@luxbock" :op (cc/anchor-text->chunk long-version)}])))
+                        (u/insert-at 4 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
                         first-heading-fn
                         second-heading-fn
                         third-heading-fn)

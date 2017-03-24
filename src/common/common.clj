@@ -19,6 +19,17 @@
 (defn default-text->chunks [text]
   [[:chunk text]])
 
+;; 51,102,187
+(def anchor-attributes-1 {:style {:style :underline
+                                  :color [51 102 187]}})
+(def anchor-attributes-2 {:color [51 102 187]})
+(def anchor-attributes anchor-attributes-1)
+
+(defn anchor-text->chunk [link-fn]
+  (fn [text]
+    ;(println "anchor-text->chunks for" text)
+    [:anchor (assoc anchor-attributes :target (link-fn text)) text]))
+
 (defn create-spaced-paragraph
   ([text]
     (create-spaced-paragraph text default-text->chunks))
