@@ -25,11 +25,13 @@
   ([text->chunks text]
    (conj (into [:paragraph] (text->chunks text)) [:spacer])))
 
+(def bigger 11)
+
 (defn insert-heading [text n]
   (fn [paragraphs]
     ;(println paragraphs)
     (assert (vector? paragraphs))
-    (u/insert-at n [:heading {:style {:size 15}} text]
+    (u/insert-at n [:heading {:style {:size bigger}} text]
                  paragraphs)))
 
 (defn insert-image [image-file-name {:keys [n xscale yscale]}]

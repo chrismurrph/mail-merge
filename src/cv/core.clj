@@ -67,6 +67,12 @@
 
 (def create-contacts-table create-contacts-table-with-images)
 
+;; 51,102,187
+(def anchor-attributes-1 {:style {:style :underline
+                                  :color [51 102 187]}})
+(def anchor-attributes-2 {:color [51 102 187]})
+(def anchor-attributes anchor-attributes-1)
+
 (defn create-intro [name contacts address keywords libs]
   (assert (string? contacts))
   (let [props middle-left-props
@@ -75,14 +81,18 @@
                    (map read-string)
                    (map (juxt (comp str first) (comp str second))))
         contact-links (mapv (fn [[link user-id]]
-                              [:anchor {:target link} (str (short-version link) " (" user-id ")")]) links)]
+                              [:anchor (assoc anchor-attributes :target link) (str (short-version link) " (" user-id ")")]) links)]
     [:pdf-table {
                  ;:cell-border  true
                  ;:horizontal-align :left
                  :width-percent 100
                  }
      [1 5]
-     [[:pdf-cell props ""] [:pdf-cell (assoc props :align :center :valign :top) name]]
+     [[:pdf-cell props ""] [:pdf-cell {:align :center
+                                       :valign :top
+                                       :style :bold
+                                       :size cc/bigger
+                                       :height 25} name]]
      [[:pdf-cell cell-props "Links"] [:pdf-cell props (create-contacts-table contact-links)]]
      [[:pdf-cell props "Address"] [:pdf-cell props address]]
      [[:pdf-cell props "Experience"] [:pdf-cell props keywords]]
@@ -93,8 +103,8 @@
   [:pdf-table
    {:width-percent 100
     :cell-border   true}
-   [7.25 2.02]
-   [(create-intro name contact-links address keywords libs) (c/image-here image-file-name 36.7)]])
+   [7.25 2.13]
+   [(create-intro name contact-links address keywords libs) (c/image-here image-file-name 38.1)]])
 
 (defn create-job-row [{:keys [month-from year-from month-to year-to org position]}]
   (assert (string? month-to))
@@ -118,6 +128,7 @@
 (defn make-cv [[name contact-links address keywords libs] jobs paragraphs cv-me-file-name]
   (->> []
        (u/insert-at 0 (jobs-table jobs))
+       (u/insert-at 0 [:spacer])
        (insert-paragraphs paragraphs)
        (u/insert-at 0 [:spacer])
        (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))))
@@ -144,13 +155,17 @@
       [[:chunk text]])))
 
 (defn produce-cv []
-  (let [insert-heading-fn (cc/insert-heading "Some Heading" 1)
-        paragraphs' (->> cv-in-file-name
-                         u/file-name->lines
-                         (mapv (partial cc/create-spaced-paragraph text->chunks))
-                         insert-heading-fn)
+  (let [first-heading-fn (cc/insert-heading "Clojure" 0)
+        second-heading-fn (cc/insert-heading "Current Position" 3)
+        third-heading-fn (cc/insert-heading "Employment History" 8)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn cv-misc-in-file-name)
-        paragraphs (->> paragraphs' (u/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor {:target coy-website} coy-link-title] [:spacer]]))
+        paragraphs (->> cv-in-file-name
+                        u/file-name->lines
+                        (mapv (partial cc/create-spaced-paragraph text->chunks))
+                        (u/insert-at 4 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc anchor-attributes :target coy-website) coy-link-title] [:spacer]])
+                        first-heading-fn
+                        second-heading-fn
+                        third-heading-fn)
         summary-info (->> cv-summary-in-file-name
                           u/file-name->lines)]
     (let [cv (make-cv summary-info (u/get-edn cv-jobs-in-file-name) paragraphs personal-picture)
