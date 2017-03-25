@@ -150,7 +150,7 @@
     (if-let [idx (s/index-of text search-word)]
       (let [before (subs text 0 idx)
             after (subs text (+ idx (count search-word)))]
-        [[:chunk before] (op search-word) [:chunk after]])
+        (concat (conj (text->chunks tail before) (op search-word)) (text->chunks tail after)))
       (text->chunks tail text))
     [[:chunk text]]))
 
@@ -164,9 +164,10 @@
                         (mapv (partial cc/create-spaced-paragraph
                                        (partial text->chunks
                                                 [{:search-word "installed" :op cc/make-italicized-chunk}
-                                                 ;; My code works if stick to one of these. Real problem is links don't work
-                                                 #_{:search-word "@atroche" :op (cc/anchor-text->chunk long-version)}
-                                                 #_{:search-word "@luxbock" :op (cc/anchor-text->chunk long-version)}])))
+                                                 ;; Unfortunately links don't work - which means the link for me won't work either
+                                                 ;{:search-word "@atroche" :op (cc/anchor-text->chunk long-version)}
+                                                 ;{:search-word "@luxbock" :op (cc/anchor-text->chunk long-version)}
+                                                 ])))
                         (u/insert-at 4 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
                         first-heading-fn
                         second-heading-fn
