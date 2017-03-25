@@ -7,7 +7,8 @@
             [clojure.string :as s]))
 
 (def cv-in-file-name "cv-paragraphs.md")
-(def cv-summary-in-file-name "cv-summary-info.txt")
+(def cv-text-links "cv-text-links.md")
+(def cv-summary-in-file-name "cv-summary-info.md")
 (def cv-jobs-in-file-name "cv-jobs.edn")
 (def cv-misc-in-file-name "cv-misc.edn")
 (def output-dir "output")
@@ -16,7 +17,9 @@
   (pdf/pdf
     [{:pages         true
       :top-margin    25
-      :bottom-margin 30}
+      :bottom-margin 30
+      :font          {:family :times-roman
+                      :size 11}}
      cv]
     file-name))
 
@@ -37,11 +40,19 @@
     (s/index-of contact-str "clojurians") "Clojurians Slack"
     :default contact-str))
 
-(defn long-version [found-str]
-  (case found-str
-    "@atroche" "https://clojurians.slack.com/messages/search/atroche/"
-    "@luxbock" "https://clojurians.slack.com/messages/C0PULSD25/search/luxbock/"
-    (assert false (str "No match for: " found-str))))
+;;
+;; Not all being used because these links are not going to work. Nor is my personal one but I'm
+;; "@atroche" "https://clojurians.slack.com/messages/search/atroche/"
+;; "@luxbock" "https://clojurians.slack.com/messages/C0PULSD25/search/luxbock/"
+;; still going to leave it as a link.
+;;
+(defn long-version []
+  (let [links (->> cv-text-links
+                   u/file-name->lines
+                   (map #(s/split % #","))
+                   (into {}))]
+    (fn [found-str]
+      (get links found-str))))
 
 (defn top [props]
   (assoc props :valign :top))
@@ -103,8 +114,8 @@
   [:pdf-table
    {:width-percent 100
     :cell-border   true}
-   [7.25 2.13]
-   [(create-intro name contact-links address keywords libs) (c/image-here image-file-name 38.1)]])
+   [6.9 2.09]
+   [(create-intro name contact-links address keywords libs) (c/image-here image-file-name 39.1)]])
 
 (defn create-job-row [{:keys [month-from year-from month-to year-to org position]}]
   (assert (string? month-to))
@@ -122,29 +133,16 @@
          [1 1 1 1 4 7]]
         (mapv create-job-row jobs)))
 
-(defn insert-paragraphs [paragraphs existing]
-  (vec (concat paragraphs existing)))
+(defn insert-many-at-level [many-of existing]
+  (vec (concat many-of existing)))
 
 (defn make-cv [[name contact-links address keywords libs] jobs paragraphs cv-me-file-name]
   (->> []
-       (u/insert-at 0 (jobs-table jobs))
-       (u/insert-at 0 [:spacer])
-       (insert-paragraphs paragraphs)
+       (insert-many-at-level [[:heading {:style {:size cc/bigger}} "Employment History"] [:spacer] (jobs-table jobs)])
+       (insert-many-at-level paragraphs)
        (u/insert-at 0 [:spacer])
        (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))))
 
-;;
-;; To do this properly divide your text into a [text-1 text-2].
-;; Actually put each into a vector and give each formatting context, say {:italics ["installed"]}:
-;; [[text-1 {}] [text-2 {"installed" [:italics]}]]
-;; Then this function can be mapcat-ed over
-;; Thus remaining problem is that this function needs to perform many operations.
-;; Really we need a function that takes a vector of chunks and returns same.
-;; Only recursion will handle this. Will search thru the texts of the chunks. For each discard the
-;; chunk and turn it into 3 using this function. Note may do this many times because the word occurs
-;; in multiple places. This is a reduce over the chunks. Actually this reduce can then be reduced over
-;; for every operation.
-;;
 (defn text->chunks [[{:keys [search-word op]} & tail] text]
   (if search-word
     (if-let [idx (s/index-of text search-word)]
@@ -157,24 +155,33 @@
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading "Clojure" 0)
         second-heading-fn (cc/insert-heading "Current Position" 3)
-        third-heading-fn (cc/insert-heading "Employment History" 8)
+        third-heading-fn (cc/insert-heading "About Myself" 8)
+        ;fourth-heading-fn (cc/insert-heading "Employment History" 10)
+        long-version-fn (long-version)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn cv-misc-in-file-name)
         paragraphs (->> cv-in-file-name
                         u/file-name->lines
                         (mapv (partial cc/create-spaced-paragraph
                                        (partial text->chunks
                                                 [{:search-word "installed" :op cc/make-italicized-chunk}
-                                                 ;; Unfortunately links don't work - which means the link for me won't work either
-                                                 ;{:search-word "@atroche" :op (cc/anchor-text->chunk long-version)}
-                                                 ;{:search-word "@luxbock" :op (cc/anchor-text->chunk long-version)}
-                                                 ])))
+                                                 {:search-word "logician" :op (cc/anchor-text->chunk long-version-fn)}
+                                                 {:search-word "eight with a nine wing" :op (cc/anchor-text->chunk long-version-fn)}])))
                         (u/insert-at 4 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
                         first-heading-fn
                         second-heading-fn
-                        third-heading-fn)
+                        third-heading-fn
+                        ;fourth-heading-fn
+                        )
         summary-info (->> cv-summary-in-file-name
                           u/file-name->lines)]
     (let [cv (make-cv summary-info (u/get-edn cv-jobs-in-file-name) paragraphs personal-picture)
           out-file-path (str output-dir "/" result-pdf)]
       (write-pdf-file cv out-file-path)
       (str "Written " out-file-path " CV file"))))
+
+(defn x-1 []
+  (let [links (->> cv-text-links
+                   u/file-name->lines
+                   (map #(s/split % #","))
+                   )]
+    links))
