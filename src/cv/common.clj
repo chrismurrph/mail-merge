@@ -4,6 +4,7 @@
 (defn image-here
   ([image-file-name scale x y]
    (let [img (-> image-file-name io/resource)]
+     (assert img (str "Not found " image-file-name " at io/resource"))
      [:chunk {:x x :y y} [:image {:scale  scale
                                    :align  :center
                                    :valign :middle}

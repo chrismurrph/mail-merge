@@ -7,16 +7,18 @@
     [letter.common :as c]
     [common.common :as cc]))
 
-(def letter-file-name "merge_letter.txt")
-(def addresses-file-name "addresses.txt")
-(def windmills-file-name "Another_Advert.jpg")
+(def letter-file-name "mm/merge_letter.txt")
+(def addresses-file-name "mm/addresses.txt")
+(def windmills-file-name "mm/Another_Advert.jpg")
 (def output-dir "output")
 (def sender-address ["Chris Murphy" "P.O. Box 20" "Adelaide SA 5000"])
 
 (defn -write-pdf-file! [letter file-name]
   (pdf/pdf
     [{:top-margin    5
-      :bottom-margin 5}
+      :bottom-margin 5
+      :font {:family :times-roman
+             :size   11}}
      letter]
     file-name))
 
@@ -40,17 +42,13 @@
 (defn dear-sir [{:keys [first-name second-name]}]
   (fn [paragraphs]
     (let [para (cc/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
-      ;(u/pp paragraphs)
-      (->> paragraphs
-           (u/insert-at 0 para)))))
+      (u/insert-at 0 para paragraphs))))
 
 (defn left-right-addresses [l r]
-  (let [transposed (mapv vector l r)]
-    ;(println transposed)
-    (fn [paragraphs]
-      (->> paragraphs
-           (u/insert-at 0 [:spacer])
-           (u/insert-at 0 (c/create-addrs l r))))))
+  (fn [paragraphs]
+    (->> paragraphs
+         (u/insert-at 0 [:spacer])
+         (u/insert-at 0 (c/create-addrs l r)))))
 
 (defn write-pdf-files! [paragraphs contacts]
   (for [{:keys [first-name second-name address] :as contact-info} contacts]

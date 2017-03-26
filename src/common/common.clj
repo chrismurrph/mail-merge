@@ -32,7 +32,7 @@
 
 (defn create-spaced-paragraph
   ([text]
-   (create-spaced-paragraph text default-text->chunks))
+   (create-spaced-paragraph default-text->chunks text))
   ([text->chunks text]
    (conj (into [:paragraph] (text->chunks text)) [:spacer])))
 
@@ -44,8 +44,15 @@
     ;; TODO
     ;; Can't seem to get a font that is a particular size and underlined
     ;; I can do bold or underlined on their own, but both are too big
-    (u/insert-at n [:heading {:style {:size bigger}} text]
-                 paragraphs)))
+    (->> paragraphs
+         (u/insert-at n [:heading {:style {:size bigger}} text]))))
+
+(defn insert-page-break-heading [text n]
+  (fn [paragraphs]
+    (assert (vector? paragraphs))
+    (->> paragraphs
+         (u/insert-at n [:heading {:style {:size bigger}} text])
+         (u/insert-at n [:pagebreak]))))
 
 (defn insert-image [image-file-name {:keys [n xscale yscale]}]
   (fn [paragraphs]
