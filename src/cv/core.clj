@@ -17,9 +17,9 @@
   (pdf/pdf
     [{:pages         true
       :top-margin    25
-      :bottom-margin 30
+      :bottom-margin 33
       :font          {:family :times-roman
-                      :size 11}}
+                      :size   11}}
      cv]
     file-name))
 
@@ -52,15 +52,14 @@
                    (map #(s/split % #","))
                    (into {}))]
     (fn [found-str]
-      (get links found-str))))
+      (let [res (get links found-str)]
+        (assert res (str "Not found a link target for " found-str))
+        res))))
 
 (defn top [props]
   (assoc props :valign :top))
 
-;;
-;; Works but going to take too much time with every image being a slightly different size
-;;
-(defn create-contacts-table-with-images [contact-links]
+(defn create-my-links-table [contact-links]
   (let [img-fn c/image-here]
     [:pdf-table
      {:width-percent 100
@@ -71,18 +70,6 @@
      [[:pdf-cell (top middle-props) (img-fn "linkedin-button.png" 7 2 2)] [:pdf-cell (top middle-left-props) [:paragraph (u/third contact-links)]]]
      [[:pdf-cell (top middle-props) (img-fn "slack.png" 3 -3)] [:pdf-cell (top middle-left-props) [:paragraph (u/fourth contact-links)]]]
      ]))
-
-(defn create-contacts-table-no-images [contact-links]
-  [:pdf-table
-   {:width-percent 100
-    :cell-border   false}
-   [1]
-   [[:pdf-cell cell-props [:paragraph (first contact-links)]]]
-   [[:pdf-cell cell-props [:paragraph (second contact-links)]]]
-   [[:pdf-cell cell-props [:paragraph (u/third contact-links)]]]
-   [[:pdf-cell cell-props [:paragraph (u/fourth contact-links)]]]])
-
-(def create-contacts-table create-contacts-table-with-images)
 
 (defn create-intro [name contacts address keywords libs]
   (assert (string? contacts))
@@ -104,7 +91,7 @@
                                        :style  :bold
                                        :size   cc/bigger
                                        :height 25} name]]
-     [[:pdf-cell cell-props "Links"] [:pdf-cell props (create-contacts-table contact-links)]]
+     [[:pdf-cell cell-props "Links"] [:pdf-cell props (create-my-links-table contact-links)]]
      [[:pdf-cell props "Address"] [:pdf-cell props address]]
      [[:pdf-cell props "Experience"] [:pdf-cell props keywords]]
      [[:pdf-cell props "Libraries"] [:pdf-cell props libs]]
@@ -114,17 +101,18 @@
   [:pdf-table
    {:width-percent 100
     :cell-border   true}
-   [6.9 2.09]
+   [6.9 2.08]
    [(create-intro name contact-links address keywords libs) (c/image-here image-file-name 39.1)]])
 
 (defn create-job-row [{:keys [month-from year-from month-to year-to org position]}]
   (assert (string? month-to))
-  [[:pdf-cell cell-props month-from]
-   [:pdf-cell cell-props (str year-from)]
-   [:pdf-cell cell-props month-to]
-   [:pdf-cell cell-props (str year-to)]
-   [:pdf-cell cell-props org]
-   [:pdf-cell cell-props position]])
+  (let [long-version-fn (long-version)]
+    [[:pdf-cell cell-props month-from]
+     [:pdf-cell cell-props (str year-from)]
+     [:pdf-cell cell-props month-to]
+     [:pdf-cell cell-props (str year-to)]
+     [:pdf-cell cell-props (cc/word->paragraph {:search-word "www.strandz.org" :op (cc/anchor-text->anchor long-version-fn)} org)]
+     [:pdf-cell cell-props position]]))
 
 (defn jobs-table [jobs]
   (into [:pdf-table
@@ -143,15 +131,6 @@
        (u/insert-at 0 [:spacer])
        (u/insert-at 0 (image-table name contact-links address keywords libs cv-me-file-name))))
 
-(defn text->chunks [[{:keys [search-word op]} & tail] text]
-  (if search-word
-    (if-let [idx (s/index-of text search-word)]
-      (let [before (subs text 0 idx)
-            after (subs text (+ idx (count search-word)))]
-        (concat (conj (text->chunks tail before) (op search-word)) (text->chunks tail after)))
-      (text->chunks tail text))
-    [[:chunk text]]))
-
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading "Clojure" 0)
         second-heading-fn (cc/insert-heading "Current Position" 3)
@@ -162,10 +141,10 @@
         paragraphs (->> cv-in-file-name
                         u/file-name->lines
                         (mapv (partial cc/create-spaced-paragraph
-                                       (partial text->chunks
+                                       (partial cc/word-in-text->chunks
                                                 [{:search-word "installed" :op cc/make-italicized-chunk}
-                                                 {:search-word "logician" :op (cc/anchor-text->chunk long-version-fn)}
-                                                 {:search-word "eight with a nine wing" :op (cc/anchor-text->chunk long-version-fn)}])))
+                                                 {:search-word "logician" :op (cc/anchor-text->anchor long-version-fn)}
+                                                 {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-fn)}])))
                         (u/insert-at 4 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
                         first-heading-fn
                         second-heading-fn
