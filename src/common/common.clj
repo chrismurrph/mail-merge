@@ -37,6 +37,7 @@
    (conj (into [:paragraph] (text->chunks text)) [:spacer])))
 
 (def bigger 11)
+(def smaller 9)
 
 (defn insert-heading [text n]
   (fn [paragraphs]
@@ -54,11 +55,14 @@
          (u/insert-at n [:heading {:style {:size bigger}} text])
          (u/insert-at n [:pagebreak]))))
 
-(defn insert-image [image-file-name {:keys [n xscale yscale]}]
+(defn insert-image [image-file-name {:keys [n xscale yscale caption]}]
   (fn [paragraphs]
     (assert (vector? paragraphs))
-    (u/insert-at n [:image {:xscale xscale
-                            :yscale yscale
-                            :align  :center}
-                    (-> image-file-name io/resource)]
+    (u/insert-at n [:paragraph
+                    {:align  :center}
+                    [:image {:xscale xscale
+                             :yscale yscale}
+                     (-> image-file-name io/resource)]
+                    [:chunk {:size  smaller} caption]
+                    [:spacer]]
                  paragraphs)))

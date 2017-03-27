@@ -17,5 +17,5 @@ pom.xml.asc
 *.jpg
 *.pdf
 cv-*.md
-merge_letter.md
 *.png
+merge_*.md

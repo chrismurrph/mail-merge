@@ -10,7 +10,7 @@
 (def cv-text-links "cv/cv-text-links.md")
 (def cv-summary-in-file-name "cv/cv-summary-info.md")
 (def cv-jobs-in-file-name "cv/cv-jobs.edn")
-(def cv-misc-in-file-name "cv/cv-misc.edn")
+(def misc-in-file-name "cv/misc.edn")
 (def output-dir "output")
 
 (defn -write-pdf-file! [cv file-name]
@@ -139,7 +139,7 @@
         third-heading-fn (cc/insert-page-break-heading "About Myself" 8)
         ;fourth-heading-fn (cc/insert-heading "Employment History" 10)
         long-version-fn (long-version)
-        {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn cv-misc-in-file-name)
+        {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
         paragraphs (->> cv-in-file-name
                         u/file-name->lines
                         (mapv (partial cc/create-spaced-paragraph

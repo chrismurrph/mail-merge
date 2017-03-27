@@ -7,18 +7,19 @@
     [letter.common :as c]
     [common.common :as cc]))
 
-(def letter-file-name "mm/merge_letter.txt")
+(def letter-file-name "mm/merge-letter-2.md")
 (def addresses-file-name "mm/addresses.txt")
 (def windmills-file-name "mm/Another_Advert.jpg")
 (def output-dir "output")
-(def sender-address ["Chris Murphy" "P.O. Box 20" "Adelaide SA 5000"])
+(def misc-in-file-name "mm/misc.edn")
 
 (defn -write-pdf-file! [letter file-name]
   (pdf/pdf
-    [{:top-margin    5
-      :bottom-margin 5
-      :font {:family :times-roman
-             :size   11}}
+    [{:top-margin    35
+      :bottom-margin 55
+      :pages         true
+      :font          {:family :times-roman
+                      :size   11}}
      letter]
     file-name))
 
@@ -42,7 +43,10 @@
 (defn dear-sir [{:keys [first-name second-name]}]
   (fn [paragraphs]
     (let [para (cc/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
-      (u/insert-at 0 para paragraphs))))
+      (->> paragraphs
+           (u/insert-at 0 para)
+           (u/insert-at 0 [:spacer])
+           (u/insert-at 0 [:spacer])))))
 
 (defn left-right-addresses [l r]
   (fn [paragraphs]
@@ -50,7 +54,7 @@
          (u/insert-at 0 [:spacer])
          (u/insert-at 0 (c/create-addrs l r)))))
 
-(defn write-pdf-files! [paragraphs contacts]
+(defn write-pdf-files! [paragraphs contacts sender-address]
   (for [{:keys [first-name second-name address] :as contact-info} contacts]
     (let [formal-intro-fn (dear-sir contact-info)
           to-address (into [(str first-name " " second-name)] address)
@@ -63,18 +67,21 @@
       file-name)))
 
 ;;
-;; When make proper function will use all contacts
+;; When make proper function will use all contacts (not take 1 contact and take 3 files)
 ;;
-(defn x-1 []
-  (let [insert-img-fn (cc/insert-image windmills-file-name {:n 1
-                                                            :xscale 0.8
-                                                            :yscale 0.8})
+(defn produce-letters []
+  (let [{:keys [caption-text sender-address]} (u/get-edn misc-in-file-name)
+        insert-img-fn (cc/insert-image windmills-file-name {:n       1
+                                                            :xscale  0.8
+                                                            :yscale  0.8
+                                                            :caption caption-text})
         paragraphs (->> letter-file-name
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)
-                        insert-img-fn)
+                        insert-img-fn
+                        (u/insert-at 4 [:pagebreak]))
         contacts (take 1 (get-contacts (u/file-name->lines addresses-file-name)))
-        files-written (write-pdf-files! paragraphs contacts)]
+        files-written (write-pdf-files! paragraphs contacts sender-address)]
     (str "Written " (count contacts) " pdf files (first 3): " (seq (map symbol (take 3 files-written))))))
 
 (defn x-2 []
