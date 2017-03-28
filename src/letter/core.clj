@@ -78,19 +78,11 @@
         paragraphs (->> letter-file-name
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)
-                        insert-img-fn)
+                        insert-img-fn
+                        ;; Gives some header on the top of the second page
+                        (u/insert-at 4 [:spacer])
+                        (u/insert-at 4 [:spacer])
+                        )
         contacts (take 1 (get-contacts (u/file-name->lines addresses-file-name)))
         files-written (write-pdf-files! paragraphs contacts sender-address)]
     (str "Written " (count contacts) " pdf files (first 3): " (seq (map symbol (take 3 files-written))))))
-
-(defn x-2 []
-  (pdf/pdf
-    [{}
-     [:list {:roman true}
-      [:chunk {:style :bold} "a bold item"]
-      "another item"
-      "yet another item"]
-     [:phrase "some text"]
-     [:phrase "some more text"]
-     [:paragraph "yet more text"]]
-    "doc.pdf"))
