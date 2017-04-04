@@ -20,6 +20,8 @@
     [{:pages         true
       :top-margin    55
       :bottom-margin 33
+      ;:left-margin   40
+      ;:right-margin  40
       :font          {:family :times-roman
                       :size   11}}
      cv]
@@ -42,16 +44,17 @@
 
 (defn make-cv [[name phone email contact-links address keywords libs] referees jobs paragraphs cv-me-file-name]
   (->> []
-       (insert-many-at-level [[:heading {:style {:size cc/bigger}} "Referees"] [:spacer] (t/referees-table referees)])
+       ;; spacer only works well when table has a border
+       (insert-many-at-level [(cc/heading "Referees") #_[:spacer] (t/referees-table referees)])
        (u/insert-at 0 [:spacer])
-       (insert-many-at-level [[:heading {:style {:size cc/bigger}} "Employment History"] [:spacer] (t/jobs-table long-version-fn jobs)])
+       (insert-many-at-level [(cc/heading "Employment History") [:spacer] (t/jobs-table long-version-fn jobs)])
        (insert-many-at-level paragraphs)
        (u/insert-at 0 [:spacer])
        (u/insert-at 0 (t/image-table name phone email contact-links address keywords libs cv-me-file-name))))
 
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading "Current Position" 0)
-        second-heading-fn (cc/insert-heading "Clojure" 6)
+        second-heading-fn (cc/insert-page-break-heading "Clojure" 6)
         third-heading-fn (cc/insert-heading "About Myself" 9)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
         paragraphs (->> cv-in-file-name

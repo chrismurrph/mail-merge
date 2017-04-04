@@ -10,12 +10,12 @@
 (def cell-props {:valign :top :align :left})
 (def middle-props {:valign :middle :align :center})
 (def middle-left-props {:valign :middle :align :left})
+(def table-props {:width-percent 100 :horizonatal-align :right})
 
 (defn create-my-links-table [contact-links]
   (let [img-fn c/image-here]
     [:pdf-table
-     {:width-percent 100
-      :cell-border   false}
+     (assoc table-props :cell-border false)
      [1 8 1 8]
      [[:pdf-cell (top middle-props) (img-fn "cv/github-2.png" 1.6 0)] [:pdf-cell (top middle-left-props) [:paragraph (first contact-links)]]
       [:pdf-cell (top middle-props) (img-fn "cv/apple-touch-icon.png" 11 0 1)] [:pdf-cell (top middle-left-props) [:paragraph (second contact-links)]]]
@@ -31,11 +31,7 @@
                    (map (juxt (comp str first) (comp str second))))
         contact-links (mapv (fn [[link user-id]]
                               [:anchor (assoc cc/anchor-attributes :target link) (str #_(short-version link) #_" " user-id)]) links)]
-    [:pdf-table {
-                 ;:cell-border  true
-                 ;:horizontal-align :left
-                 :width-percent 100
-                 }
+    [:pdf-table (assoc table-props :cell-border true)
      [1 6.5]
      [[:pdf-cell props ""] [:pdf-cell {:align  :center
                                        :valign :top
@@ -52,8 +48,7 @@
 (defn image-table [your-name your-phone your-email your-contact-links
                    your-address your-keywords your-libs your-image-file-name]
   [:pdf-table
-   {:width-percent 100
-    :cell-border   true}
+   (assoc table-props :cell-border true)
    [6.9 2.06]
    [(create-intro your-name your-phone your-email your-contact-links your-address your-keywords your-libs)
     (c/image-here your-image-file-name 38.9)]])
@@ -69,12 +64,12 @@
    [:pdf-cell cell-props position]])
 
 (defn jobs-table [long-version-fn jobs]
-  (let [create-job-row-fn (partial create-job-row long-version-fn)]
-    (into [:pdf-table
-           {:width-percent 100
-            :cell-border   true}
-           [1 1 4 7]]
-          (mapv create-job-row-fn jobs))))
+  (let [create-job-row-fn (partial create-job-row long-version-fn)
+        table (into [:pdf-table
+                     (assoc table-props :cell-border true :width-percent 95)
+                     [1 1 4 6]]
+                    (mapv create-job-row-fn jobs))]
+    [:paragraph {:indent cc/indent} table]))
 
 (defn create-referees-row [{:keys [name phone handle email org role]}]
   (assert name)
@@ -88,8 +83,8 @@
      [:pdf-cell cell-props desc]]))
 
 (defn referees-table [referees]
-  (into [:pdf-table
-         {:width-percent 100
-          :cell-border   true}
-         [2 3 3 4]]
-        (mapv create-referees-row referees)))
+  (let [table (into [:pdf-table
+                     (assoc table-props :cell-border false :horizonatal-align :left)
+                     [2 2.5 3 4]]
+                    (mapv create-referees-row referees))]
+    [:paragraph {:indent 1.5} table]))
