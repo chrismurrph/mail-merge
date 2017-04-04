@@ -16,6 +16,12 @@ pom.xml.asc
 *.txt
 *.jpg
 *.pdf
-cv-*.md
 *.png
 merge_*.md
+merge-*.md
+scratch
+paragraphs.md
+summary-info.md
+text-links.md
+/resources/cv/
+/resources/mm/
