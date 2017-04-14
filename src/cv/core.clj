@@ -7,7 +7,7 @@
             [clojure.string :as s]
             [cv.tables :as t]))
 
-(def cv-in-file-name "cv/paragraphs.md")
+(def cv-in-file-name "cv/paragraphs-2.md")
 (def cv-summary-in-file-name "cv/summary-info.md")
 (def cv-jobs-in-file-name "cv/jobs.edn")
 (def cv-referees-in-file-name "cv/referees.edn")
@@ -54,7 +54,7 @@
 
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading "Current Position" 0)
-        second-heading-fn (cc/insert-page-break-heading "Clojure" 6)
+        second-heading-fn (cc/insert-heading "Clojure" 6)
         third-heading-fn (cc/insert-heading "About Myself" 9)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
         paragraphs (->> cv-in-file-name
@@ -65,7 +65,7 @@
                                                  {:search-word "weather" :op cc/make-italicized-chunk}
                                                  {:search-word "logician" :op (cc/anchor-text->anchor long-version-fn)}
                                                  {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-fn)}])))
-                        (u/insert-at 2 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
+                        (u/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
                         first-heading-fn
                         second-heading-fn
                         third-heading-fn)

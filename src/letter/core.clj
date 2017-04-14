@@ -7,11 +7,11 @@
     [letter.common :as c]
     [common.common :as cc]))
 
-(def letter-file-name "mm/merge-letter-2.md")
+(def letter-file-name "mm/merge-letter-4.md")
 (def addresses-file-name "mm/addresses.txt")
 (def windmills-file-name "mm/Another_Advert.jpg")
-(def output-dir "output")
 (def misc-in-file-name "mm/misc.edn")
+(def output-dir "output")
 
 (defn -write-pdf-file! [letter file-name]
   (pdf/pdf
@@ -79,10 +79,7 @@
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)
                         insert-img-fn
-                        ;; Gives some header on the top of the second page
-                        (u/insert-at 4 [:spacer])
-                        (u/insert-at 4 [:spacer])
-                        )
+                        (u/insert-at 3 [:pagebreak]))
         contacts (take 1 (get-contacts (u/file-name->lines addresses-file-name)))
         files-written (write-pdf-files! paragraphs contacts sender-address)]
     (str "Written " (count contacts) " pdf files (first 3): " (seq (map symbol (take 3 files-written))))))
