@@ -11,3 +11,6 @@
        (drop 5)
        (take 3)
        u/pp))
+
+(defn x-2 []
+  (c/split-by-commas "PO Box 6237, Halifax Street, Adelaide, SA 5000"))

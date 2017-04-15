@@ -31,7 +31,7 @@
      :address     (s/split address #",")})
 
 (defn split-by-commas [addr]
-  (s/split addr #","))
+  (mapv s/trim (s/split addr #",")))
 
 (defn make-address [[title first-name second-name position state-party street-addr po-box-addr]]
   (let [res-1 {:title          title
