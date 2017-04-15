@@ -12,12 +12,23 @@
        io/reader
        line-seq))
 
+(def width 120)
+
+(defn pp-str
+  ([n x]
+   (binding [pp/*print-right-margin* n]
+     (-> x clojure.pprint/pprint with-out-str)))
+  ([x]
+   (pp-str width x)))
+
 (defn pp
   ([n x]
    (binding [pp/*print-right-margin* n]
      (-> x clojure.pprint/pprint)))
   ([x]
-   (pp 100 x)))
+   (pp width x)))
+
+(def pp-off identity)
 
 (defn probe-off
   ([x]

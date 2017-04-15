@@ -8,7 +8,9 @@
     [common.common :as cc]))
 
 (def letter-file-name "mm/merge-letter-4.md")
-(def addresses-file-name "mm/addresses.txt")
+(def addresses-file-name-old "mm/addresses.txt")
+(def addresses-file-name-new "mm/Senators.txt")
+(def addresses-file-name addresses-file-name-new)
 (def windmills-file-name "mm/Another_Advert.jpg")
 (def misc-in-file-name "mm/misc.edn")
 (def output-dir "output")
@@ -23,10 +25,28 @@
      letter]
     file-name))
 
-(defn make-address [[first-name second-name address]]
-  {:first-name  first-name
-   :second-name second-name
-   :address     (s/split address #",")})
+#_(defn make-address [[first-name second-name address]]
+    {:first-name  first-name
+     :second-name second-name
+     :address     (s/split address #",")})
+
+(defn split-by-commas [addr]
+  (s/split addr #","))
+
+(defn make-address [[title first-name second-name position state-party street-addr po-box-addr]]
+  (let [res-1 {:title          title
+               :first-name     first-name
+               :second-name    second-name
+               :state-party    state-party
+               :street-address (split-by-commas street-addr)
+               }
+        res-2 (if (= "." position)
+                res-1
+                (assoc res-1 :position position))
+        res-3 (if (= "." po-box-addr)
+                res-2
+                (assoc res-2 :po-box-address (split-by-commas po-box-addr)))]
+    res-3))
 
 (defn address->file-name [{:keys [first-name second-name]}]
   (str first-name "-" second-name ".pdf"))
@@ -34,11 +54,18 @@
 (defn blank-line? [x]
   (= "" (first x)))
 
+#_(defn get-contacts [address-lines]
+    (->> address-lines
+         (partition-by #(= % ""))
+         (remove blank-line?)
+         (map make-address)))
+
 (defn get-contacts [address-lines]
   (->> address-lines
-       (partition-by #(= % ""))
-       (remove blank-line?)
-       (map make-address)))
+       (partition-by #(= "" %))
+       (remove #(= ["" ""] %))
+       (map make-address)
+       ))
 
 (defn dear-sir [{:keys [first-name second-name]}]
   (fn [paragraphs]
@@ -55,9 +82,9 @@
          (u/insert-at 0 (c/create-addrs l r)))))
 
 (defn write-pdf-files! [paragraphs contacts sender-address]
-  (for [{:keys [first-name second-name address] :as contact-info} contacts]
+  (for [{:keys [first-name second-name street-address] :as contact-info} contacts]
     (let [formal-intro-fn (dear-sir contact-info)
-          to-address (into [(str first-name " " second-name)] address)
+          to-address (into [(str first-name " " second-name)] street-address)
           address-headers-fn (left-right-addresses to-address sender-address)
           file-name (address->file-name contact-info)
           letter (-> paragraphs
@@ -80,6 +107,10 @@
                         (mapv cc/create-spaced-paragraph)
                         insert-img-fn
                         (u/insert-at 3 [:pagebreak]))
-        contacts (take 1 (get-contacts (u/file-name->lines addresses-file-name)))
+        contacts (->> addresses-file-name
+                      u/file-name->lines
+                      get-contacts
+                      (take 1)
+                      )
         files-written (write-pdf-files! paragraphs contacts sender-address)]
     (str "Written " (count contacts) " pdf files (first 3): " (seq (map symbol (take 3 files-written))))))
