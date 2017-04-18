@@ -13,7 +13,7 @@
 (def cv-referees-in-file-name "cv/referees.edn")
 (def misc-in-file-name "cv/misc.edn")
 (def cv-text-links-file-name "cv/text-links.md")
-(def output-dir "output")
+(def output-dir "output/cv")
 
 (defn -write-pdf-file! [cv file-name]
   (pdf/pdf

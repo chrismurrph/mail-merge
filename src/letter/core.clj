@@ -13,7 +13,7 @@
 (def addresses-file-name addresses-file-name-new)
 (def windmills-file-name "mm/Another_Advert.jpg")
 (def misc-in-file-name "mm/misc.edn")
-(def output-dir "output")
+(def output-dir "output/letter")
 
 (defn -write-pdf-file! [letter file-name]
   (pdf/pdf

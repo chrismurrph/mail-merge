@@ -54,3 +54,18 @@
 (defn get-edn [file-name]
   (read-string (slurp (io/resource file-name))))
 
+(defn round-dec-pl
+  "Round a double to the given precision (number of significant digits)"
+  [precision]
+  (fn [d]
+    (let [factor (Math/pow 10 precision)]
+      (/ (Math/round (* d factor)) factor))))
+
+(def round3 (round-dec-pl 3))
+
+(defn x-1 []
+  (->> (map round3 [0.001 10.123456 9.5556])
+       ;(map type)
+       ))
+
+
