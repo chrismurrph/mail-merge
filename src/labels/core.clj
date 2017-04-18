@@ -21,12 +21,16 @@
 
 ;; Print some text at a coordinate position, where coords are in cms
 (defn print-at-cms [canvas]
-  (fn [text [x y :as coord]]
+  (fn [^Phrase text [x y :as coord]]
     (let [[x-pts y-pts] (cms->pts coord)]
+      ;(println "printing" (.getContent text))
       (ColumnText/showTextAligned canvas, Element/ALIGN_LEFT, text, x-pts, y-pts, 0))))
 
 ;; These all in cms. Use to call print-at-cms
 (def page-spec p/L7519)
+(def labels-per-page
+  (let [{:keys [labels-across labels-down]} page-spec]
+    (* labels-across labels-down)))
 (def label-indent 0.4)
 (def next-line-space 0.45)
 
@@ -39,7 +43,7 @@
   (let [canvas (.getDirectContentUnder writer)
         print-text! (print-at-cms canvas)
         {:keys [page-top-margin page-side-margin vertical-pitch horizontal-pitch]} page-spec]
-    (fn [text-lines [grid-x grid-y]]
+    (fn [[grid-x grid-y] text-lines]
       (assert (vector? text-lines))
       (let [
             ;; top left corner of label
@@ -58,41 +62,43 @@
 (defn ->Phrase [^String text]
   (Phrase. text))
 
-(defn print-one-label [printer lines]
-  (let [phrases (mapv ->Phrase lines)]
-    (printer phrases)))
+(defn create-positioned-labels [labels]
+  (let [{:keys [labels-across labels-down]} page-spec]
+    (assert (<= (count labels) labels-per-page))
+    (let [page-positions (for [y (range labels-down)
+                               x (range labels-across)]
+                           [x y])]
+      (map vector page-positions labels))))
 
 (defn print-to-file [file-name]
-  (let [os (io/output-stream (str output-dir "/" file-name))
+  (let [os (io/output-stream file-name)
         doc (Document.)
         ^PdfWriter writer (PdfWriter/getInstance doc os)
         _ (.open doc)
-        printer (print-at-grid-pos writer)]
+        printer! (print-at-grid-pos writer)]
     (.setCompressionLevel writer 0)
-    (fn [labels]
-      (let [phrases (mapv ->Phrase (first labels))]
-        (printer phrases [0 0])
+    (fn [grid-pos-labels]
+      (let [stream (mapcat (fn [{:keys [grid-pos label]}]
+                             [[grid-pos (mapv ->Phrase label)]]) grid-pos-labels)]
+        (doseq [[pos phrase] stream]
+          (printer! pos phrase))
         (.close doc)))))
 
-(defn x-1 []
-  (let [file-name "labels.pdf"
-        texts ["hello doggy world 3" "hello doggy world 4"]]
-    ((print-to-file file-name) [texts])))
+(defn print-page! [file-name labels]
+  (let [printer! (print-to-file file-name)
+        texts (->> labels
+                   create-positioned-labels
+                   (mapv (fn [[pos label]] {:grid-pos pos :label label})))]
+    ;(println texts)
+    (printer! texts)))
 
-(defn x-2 []
-  (let [os (io/output-stream (str output-dir "/" "labels.pdf"))
-        doc (Document.)
-        writer (PdfWriter/getInstance doc os)
-        _ (println (type writer))
-        hello (Phrase. "hello doggy world")
-        hello-again (Phrase. "hello again")]
-    (.open doc)
-    (let [canvas (.getDirectContentUnder writer)
-          print-text (print-at-cms canvas)]
-      (.setCompressionLevel writer 0)
-      (print-text hello [1 1])
-      (print-text hello-again [2 2])
-      (.close doc))))
-
-(defn x-3 []
-  (cms->pts [1 1]))
+;;
+;; May create lots of files depending on how many labels-per-page there are
+;;
+(defn gen-label-files! [all-labels]
+  (let [llabels (->> all-labels
+                     (partition-all labels-per-page)
+                     (map-indexed vector))]
+    (doseq [[idx labels] llabels]
+      ;(println labels)
+      (print-page! (u/make-filename idx output-dir postfix "pdf") labels))))

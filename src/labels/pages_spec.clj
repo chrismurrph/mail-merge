@@ -7,4 +7,5 @@
    :label-height     3.39
    :vertical-pitch   3.39
    :horizontal-pitch 6.65
-   :labels-per-page  24})
+   :labels-across    3
+   :labels-down      8})

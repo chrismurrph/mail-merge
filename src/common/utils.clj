@@ -45,6 +45,14 @@
    (println msg x)
    x))
 
+(defn make-filename
+  ([n path postfix extension]
+   (assert (and (or (zero? n) (pos? n)) (<= n 99)))
+   (let [prefix (format "%02d" n)]
+     (str path "/" prefix "_" postfix (when extension (str "." extension)))))
+  ([n path postfix]
+    (make-filename n path postfix nil)))
+
 ;;
 ;; x to be inserted at n in vector v
 ;;
@@ -55,7 +63,7 @@
   (read-string (slurp (io/resource file-name))))
 
 (defn round-dec-pl
-  "Round a double to the given precision (number of significant digits)"
+  "Round a double to the given number of significant digits"
   [precision]
   (fn [d]
     (let [factor (Math/pow 10 precision)]
@@ -67,5 +75,8 @@
   (->> (map round3 [0.001 10.123456 9.5556])
        ;(map type)
        ))
+
+(defn x-2 []
+  (make-filename 0 "output" "senators.pdf"))
 
 
