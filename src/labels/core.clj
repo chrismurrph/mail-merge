@@ -3,8 +3,8 @@
             [common.utils :as u]
             [labels.pages-spec :as p]
             [common.common :as cc])
-  (:import (cljpdf.text.pdf PdfWriter ColumnText PdfContentByte)
-           (cljpdf.text Document Element Chunk Phrase)))
+  (:import (cljpdf.text.pdf PdfWriter ColumnText PdfContentByte BaseFont)
+           (cljpdf.text Document Element Chunk Phrase Font FontFactory)))
 
 (def postfix "senators")
 (def addresses-file-name "mm/Senators.txt")
@@ -40,7 +40,8 @@
           content (.getContent text)
           width (.getWidthPoint text)]
       ;; When too wide means s/have fixed earlier (when had hash)
-      (assert (<= width max-line-width) (str "Content too wide: <" content ">"))
+      (assert (<= width max-line-width) (str "Content too wide: <" content ">, over " (u/round3 max-line-width) " by "
+                                             (u/round3 (- width max-line-width))))
       (ColumnText/showTextAligned canvas, Element/ALIGN_LEFT, (Phrase. text), x-pts, y-pts, 0))))
 
 ;; Label printing is (in our case addresses) to positions in a grid.
@@ -68,8 +69,18 @@
           ;(println "printing at" x y)
           (print-text! (nth text-lines n) [x y]))))))
 
+;; Too difficult
+;(def label-font (FontFactory/getFont FontFactory/TIMES_ROMAN 12 Font/NORMAL))
+
 (defn ->Chunk [^String text]
-  (Chunk. text))
+  (let [chunk (Chunk. text)]
+    ;(.setFont chunk label-font)
+    chunk))
+
+#_(defn ->Phrase [^Chunk chunk]
+  (let [phrase (Phrase. chunk)]
+    (.setFontAndSize phrase bf 36)
+    phrase))
 
 (defn create-positioned-labels [labels]
   (let [{:keys [labels-across labels-down]} page-spec]
@@ -102,9 +113,21 @@
     ;(println texts)
     (printer! texts)))
 
+(defn width-of [text]
+  (.getWidthPoint (->Chunk text)))
+
+(defn make-initial [first-name]
+  (str (first first-name) "."))
+
 (defn create-name-string [contact]
-  (let [{:keys [title first-name second-name]} contact]
-    (str title " " first-name " " second-name)))
+  (let [{:keys [title first-name second-name]} contact
+        full-name (str title " " first-name " " second-name)]
+    (if (>= (width-of full-name) max-line-width)
+      (let [shortened-name (str title " " (make-initial first-name) " " second-name)]
+        (if (>= (width-of shortened-name) max-line-width)
+          (str first-name " " second-name)
+          shortened-name))
+      full-name)))
 
 (defn make-address-label [contact]
   (let [first-line (create-name-string contact)
@@ -130,3 +153,6 @@
     (doseq [[idx labels] llabels]
       ;(println labels)
       (print-single-page-pdf! (u/make-filename idx output-dir postfix "pdf") labels))))
+
+(defn produce-labels []
+  (gen-label-files! (all-adderss-labels)))

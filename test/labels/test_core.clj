@@ -25,7 +25,7 @@
     (map-indexed vector llabels)))
 
 (defn x-4 []
-  (c/gen-label-files! (take 6 (c/all-adderss-labels))))
+  (c/gen-label-files! (c/all-adderss-labels)))
 
 (defn x-5 []
   (c/all-adderss-labels))
