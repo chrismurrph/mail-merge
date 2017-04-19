@@ -9,10 +9,12 @@
 
 (defn create-addrs [left-address right-address]
   (u/pp [left-address right-address])
-  (let [table (into [:table {:header       [[:cell {:colspan 1 :align :left}] [:cell {:colspan 1 :align :center}] [:cell {:colspan 1 :align :right}]]
-                             :border-width 0
-                             :border       false
-                             :cell-border  false
-                             :spacing      -5}
-                     ] (create-addr-rows left-address right-address))]
+  (let [table (conj (into [:table {:header       [[:cell {:colspan 1 :align :left}]
+                                                  [:cell {:colspan 1 :align :center}]
+                                                  [:cell {:colspan 1 :align :right}]]
+                                   :border-width 0
+                                   :border       false
+                                   :cell-border  false
+                                   :spacing      -5}
+                           ] (create-addr-rows left-address right-address)) ["" "" (u/formatted-now)])]
     [:paragraph {:indent cc/indent} table]))

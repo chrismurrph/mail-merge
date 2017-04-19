@@ -1,6 +1,8 @@
 (ns common.utils
   (:require [clojure.pprint :as pp]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clj-time.format :as f]
+            [clj-time.core :as t]))
 
 (def third #(nth % 2))
 (def fourth #(nth % 3))
@@ -52,12 +54,6 @@
   ([n path postfix]
     (make-filename n path postfix nil)))
 
-;;
-;; x to be inserted at n in vector v
-;;
-(defn insert-at [n x v]
-  (vec (concat (subvec v 0 n) (vector x) (subvec v n))))
-
 (defn get-edn [file-name]
   (read-string (slurp (io/resource file-name))))
 
@@ -69,6 +65,13 @@
       (/ (Math/round (* d factor)) factor))))
 
 (def round3 (round-dec-pl 3))
+
+(def -short-date-formatter (f/formatter "dd/MM/yyyy"))
+(def -long-date-formatter (f/formatter "dd MMMM yyyy"))
+(def format-date #(f/unparse -long-date-formatter %))
+
+(defn formatted-now []
+  (format-date (t/now)))
 
 (defn x-1 []
   (->> (map round3 [0.001 10.123456 9.5556])

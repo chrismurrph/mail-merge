@@ -37,20 +37,17 @@
         (assert res (str "Not found a link target for " found-str))
         res))))
 
-(defn insert-many-at-level [many-of existing]
-  (vec (concat many-of existing)))
-
 (def long-version-fn (long-version cv-text-links-file-name))
 
 (defn make-cv [[name phone email contact-links address keywords libs] referees jobs paragraphs cv-me-file-name]
   (->> []
        ;; spacer only works well when table has a border
-       (insert-many-at-level [(cc/heading "Referees") #_[:spacer] (t/referees-table referees)])
-       (u/insert-at 0 [:spacer])
-       (insert-many-at-level [(cc/heading "Employment History") [:spacer] (t/jobs-table long-version-fn jobs)])
-       (insert-many-at-level paragraphs)
-       (u/insert-at 0 [:spacer])
-       (u/insert-at 0 (t/image-table name phone email contact-links address keywords libs cv-me-file-name))))
+       (cc/insert-many [(cc/heading "Referees") #_[:spacer] (t/referees-table referees)])
+       (cc/insert-at 0 [:spacer])
+       (cc/insert-many [(cc/heading "Employment History") [:spacer] (t/jobs-table long-version-fn jobs)])
+       (cc/insert-many paragraphs)
+       (cc/insert-at 0 [:spacer])
+       (cc/insert-at 0 (t/image-table name phone email contact-links address keywords libs cv-me-file-name))))
 
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading "Current Position" 0)
@@ -65,7 +62,7 @@
                                                  {:search-word "weather" :op cc/make-italicized-chunk}
                                                  {:search-word "logician" :op (cc/anchor-text->anchor long-version-fn)}
                                                  {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-fn)}])))
-                        (u/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
+                        (cc/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
                         first-heading-fn
                         second-heading-fn
                         third-heading-fn)

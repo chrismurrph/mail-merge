@@ -13,7 +13,7 @@
 (def addresses-file-name addresses-file-name-new)
 (def windmills-file-name "mm/Another_Advert.jpg")
 (def misc-in-file-name "mm/misc.edn")
-(def output-dir "output/letter")
+(def output-dir "output/letters")
 
 (defn -write-pdf-file! [letter file-name]
   (pdf/pdf
@@ -28,27 +28,37 @@
 (defn address->file-name [{:keys [first-name second-name]}]
   (str first-name "-" second-name ".pdf"))
 
-(defn dear-sir [{:keys [first-name second-name]}]
+(defn dear-sir [{:keys [title first-name second-name]}]
   (fn [paragraphs]
-    (let [para (cc/create-spaced-paragraph (str "Dear " first-name " " second-name ","))]
+    (let [para (cc/create-spaced-paragraph (str "Dear " (first (s/split title #" ")) " " second-name ","))]
       (->> paragraphs
-           (u/insert-at 0 para)
-           (u/insert-at 0 [:spacer])
-           (u/insert-at 0 [:spacer])))))
+           (cc/insert-at 0 para)
+           (cc/insert-at 0 [:spacer])
+           (cc/insert-at 0 [:spacer])))))
 
 (defn left-right-addresses [l r]
   (fn [paragraphs]
     (->> paragraphs
-         (u/insert-at 0 [:spacer])
-         (u/insert-at 0 (c/create-addrs l r)))))
+         (cc/insert-at 0 [:spacer])
+         (cc/insert-at 0 (c/create-addrs l r)))))
 
-(defn write-pdf-files! [paragraphs contacts sender-address]
+(defn make-space [n]
+  (apply str (repeat n " ")))
+
+(def signature-indent 40)
+
+(defn write-pdf-files! [paragraphs contacts sender-address first-person second-person]
   (for [{:keys [title first-name second-name street-address] :as contact-info} contacts]
     (let [formal-intro-fn (dear-sir contact-info)
           to-address (into [(str title " " first-name " " second-name)] street-address)
           address-headers-fn (left-right-addresses to-address sender-address)
           file-name (address->file-name contact-info)
           letter (-> paragraphs
+                     (cc/insert-many [[:spacer] [:spacer]
+                                      (cc/create-spaced-paragraph (str (make-space signature-indent) "Yours faithfully"))
+                                      [:spacer] [:spacer] [:spacer] [:spacer] [:spacer]
+                                      (cc/create-spaced-paragraph
+                                        (str (make-space signature-indent) (str first-person (make-space 50) second-person)))])
                      formal-intro-fn
                      address-headers-fn)]
       (-write-pdf-file! letter (str output-dir "/" file-name))
@@ -58,7 +68,7 @@
 ;; When make proper function will use all contacts (not take 1 contact and take 3 files)
 ;;
 (defn produce-letters []
-  (let [{:keys [caption-text sender-address]} (u/get-edn misc-in-file-name)
+  (let [{:keys [caption-text sender-address first-person second-person]} (u/get-edn misc-in-file-name)
         insert-img-fn (cc/insert-image windmills-file-name {:n       1
                                                             :xscale  0.8
                                                             :yscale  0.8
@@ -68,11 +78,12 @@
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)
                         insert-img-fn
-                        (u/insert-at 3 [:pagebreak]))
+                        ;(u/insert-at 3 [:pagebreak])
+                        )
         contacts (->> addresses-file-name
                       u/file-name->lines
                       get-contacts-fn
                       (take 1)
                       )
-        files-written (write-pdf-files! paragraphs contacts sender-address)]
+        files-written (write-pdf-files! paragraphs contacts sender-address first-person second-person)]
     (str "Written " (count contacts) " pdf files (first 3): " (seq (map symbol (take 3 files-written))))))

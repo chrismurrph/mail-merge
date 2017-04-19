@@ -72,6 +72,12 @@
 (defn heading [text]
   [:heading {:style {:size bigger} :indent indent} text])
 
+;;
+;; x to be inserted at n in vector v
+;;
+(defn insert-at [n x v]
+  (vec (concat (subvec v 0 n) (vector x) (subvec v n))))
+
 (defn insert-heading [text n]
   (fn [paragraphs]
     (assert (vector? paragraphs))
@@ -79,19 +85,19 @@
     ;; Can't seem to get a font that is a particular size and underlined
     ;; I can do bold or underlined on their own, but both are too big
     (->> paragraphs
-         (u/insert-at n (heading text)))))
+         (insert-at n (heading text)))))
 
 (defn insert-page-break-heading [text n]
   (fn [paragraphs]
     (assert (vector? paragraphs))
     (->> paragraphs
-         (u/insert-at n (heading text))
-         (u/insert-at n [:pagebreak]))))
+         (insert-at n (heading text))
+         (insert-at n [:pagebreak]))))
 
 (defn insert-image [image-file-name {:keys [n xscale yscale caption]}]
   (fn [paragraphs]
     (assert (vector? paragraphs))
-    (u/insert-at n [:paragraph
+    (insert-at n [:paragraph
                     {:align  :center}
                     [:image {:xscale xscale
                              :yscale yscale}
@@ -99,3 +105,6 @@
                     [:chunk {:size  smaller} caption]
                     [:spacer]]
                  paragraphs)))
+
+(defn insert-many [many-of existing]
+  (vec (concat many-of existing)))
