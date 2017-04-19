@@ -1,11 +1,13 @@
 (ns labels.core
   (:require [clojure.java.io :as io]
             [common.utils :as u]
-            [labels.pages-spec :as p])
+            [labels.pages-spec :as p]
+            [common.common :as cc])
   (:import (cljpdf.text.pdf PdfWriter ColumnText PdfContentByte)
-           (cljpdf.text Document Phrase Element)))
+           (cljpdf.text Document Element Chunk Phrase)))
 
 (def postfix "senators")
+(def addresses-file-name "mm/Senators.txt")
 
 (def output-dir "output/labels")
 (def a4-cm-width 21.0)
@@ -19,13 +21,6 @@
 (defn cms->pts [[x-cm y-cm]]
   [(/ x-cm cm->point) (- points-height (/ y-cm cm->point))])
 
-;; Print some text at a coordinate position, where coords are in cms
-(defn print-at-cms [canvas]
-  (fn [^Phrase text [x y :as coord]]
-    (let [[x-pts y-pts] (cms->pts coord)]
-      ;(println "printing" (.getContent text))
-      (ColumnText/showTextAligned canvas, Element/ALIGN_LEFT, text, x-pts, y-pts, 0))))
-
 ;; These all in cms. Use to call print-at-cms
 (def page-spec p/L7519)
 (def labels-per-page
@@ -33,6 +28,20 @@
     (* labels-across labels-down)))
 (def label-indent 0.4)
 (def next-line-space 0.45)
+(def max-line-width
+  (let [{:keys [label-width]} page-spec]
+    (/ (- label-width (* 2 label-indent)) cm->point)))
+;(println "MAX" max-line-width)
+
+;; Print some text at a coordinate position, where coords are in cms
+(defn print-at-cms [canvas]
+  (fn [^Chunk text [x y :as coord]]
+    (let [[x-pts y-pts] (cms->pts coord)
+          content (.getContent text)
+          width (.getWidthPoint text)]
+      ;; When too wide means s/have fixed earlier (when had hash)
+      (assert (<= width max-line-width) (str "Content too wide: <" content ">"))
+      (ColumnText/showTextAligned canvas, Element/ALIGN_LEFT, (Phrase. text), x-pts, y-pts, 0))))
 
 ;; Label printing is (in our case addresses) to positions in a grid.
 ;; Given [0 0], the top left label, and the number of lines that need to be printed,
@@ -59,8 +68,8 @@
           ;(println "printing at" x y)
           (print-text! (nth text-lines n) [x y]))))))
 
-(defn ->Phrase [^String text]
-  (Phrase. text))
+(defn ->Chunk [^String text]
+  (Chunk. text))
 
 (defn create-positioned-labels [labels]
   (let [{:keys [labels-across labels-down]} page-spec]
@@ -79,18 +88,37 @@
     (.setCompressionLevel writer 0)
     (fn [grid-pos-labels]
       (let [stream (mapcat (fn [{:keys [grid-pos label]}]
-                             [[grid-pos (mapv ->Phrase label)]]) grid-pos-labels)]
-        (doseq [[pos phrase] stream]
-          (printer! pos phrase))
+                             (let [chunks (mapv ->Chunk label)]
+                               [[grid-pos chunks]])) grid-pos-labels)]
+        (doseq [[pos chunk] stream]
+          (printer! pos chunk))
         (.close doc)))))
 
-(defn print-page! [file-name labels]
+(defn print-single-page-pdf! [file-name labels]
   (let [printer! (print-to-file file-name)
         texts (->> labels
                    create-positioned-labels
                    (mapv (fn [[pos label]] {:grid-pos pos :label label})))]
     ;(println texts)
     (printer! texts)))
+
+(defn create-name-string [contact]
+  (let [{:keys [title first-name second-name]} contact]
+    (str title " " first-name " " second-name)))
+
+(defn make-address-label [contact]
+  (let [first-line (create-name-string contact)
+        {:keys [street-address po-box-address]} contact
+        address (if po-box-address po-box-address street-address)]
+    (into [first-line] address)))
+
+(defn all-adderss-labels []
+  (let [get-contacts-fn (partial cc/get-contacts cc/make-address)
+        labels (->> addresses-file-name
+                    u/file-name->lines
+                    get-contacts-fn
+                    (map make-address-label))]
+    labels))
 
 ;;
 ;; May create lots of files depending on how many labels-per-page there are
@@ -101,4 +129,4 @@
                      (map-indexed vector))]
     (doseq [[idx labels] llabels]
       ;(println labels)
-      (print-page! (u/make-filename idx output-dir postfix "pdf") labels))))
+      (print-single-page-pdf! (u/make-filename idx output-dir postfix "pdf") labels))))

@@ -2,7 +2,7 @@
   (:require [labels.core :as c]
             [common.utils :as u]
             [clojure.java.io :as io])
-  (:import (cljpdf.text Phrase Document)
+  (:import (cljpdf.text Chunk Document)
            (cljpdf.text.pdf PdfWriter)))
 
 (def example-labels [["hello doggy world a" "hello doggy world b"]
@@ -25,5 +25,8 @@
     (map-indexed vector llabels)))
 
 (defn x-4 []
-  (c/gen-label-files! example-labels))
+  (c/gen-label-files! (take 6 (c/all-adderss-labels))))
+
+(defn x-5 []
+  (c/all-adderss-labels))
 

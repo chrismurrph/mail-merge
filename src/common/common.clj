@@ -3,6 +3,34 @@
             [common.utils :as u]
             [clojure.string :as s]))
 
+(defn split-by-commas [addr]
+  (assert addr (str "Must have address to split by commas"))
+  (mapv s/trim (s/split addr #",")))
+
+(defn get-contacts [make-address-fn address-lines]
+  (->> address-lines
+       (partition-by #(= "" %))
+       (remove #(or (= ["" ""] %) (= [""] %)))
+       (map make-address-fn)))
+
+(defn make-address [[title first-name second-name position state-party street-addr po-box-addr :as in]]
+  (assert street-addr (str "No street-addr for: <" in ">"))
+  (let [res-1 {:title          title
+               :first-name     first-name
+               :second-name    second-name
+               :state-party    state-party
+               :street-address (split-by-commas street-addr)
+               }
+        res-2 (if (= "." position)
+                res-1
+                (assoc res-1 :position position))
+        res-3 (if (= "." po-box-addr)
+                res-2
+                (do
+                  (assert po-box-addr (str "No po-box-addr for: " first-name " " second-name))
+                  (assoc res-2 :po-box-address (split-by-commas po-box-addr))))]
+    res-3))
+
 (defn word-in-text->chunks [[{:keys [search-word op]} & tail] text]
   (if search-word
     (if-let [idx (s/index-of text search-word)]

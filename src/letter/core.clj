@@ -25,33 +25,8 @@
      letter]
     file-name))
 
-(defn split-by-commas [addr]
-  (mapv s/trim (s/split addr #",")))
-
-(defn make-address [[title first-name second-name position state-party street-addr po-box-addr]]
-  (let [res-1 {:title          title
-               :first-name     first-name
-               :second-name    second-name
-               :state-party    state-party
-               :street-address (split-by-commas street-addr)
-               }
-        res-2 (if (= "." position)
-                res-1
-                (assoc res-1 :position position))
-        res-3 (if (= "." po-box-addr)
-                res-2
-                (assoc res-2 :po-box-address (split-by-commas po-box-addr)))]
-    res-3))
-
 (defn address->file-name [{:keys [first-name second-name]}]
   (str first-name "-" second-name ".pdf"))
-
-(defn get-contacts [address-lines]
-  (->> address-lines
-       (partition-by #(= "" %))
-       (remove #(= ["" ""] %))
-       (map make-address)
-       ))
 
 (defn dear-sir [{:keys [first-name second-name]}]
   (fn [paragraphs]
@@ -88,6 +63,7 @@
                                                             :xscale  0.8
                                                             :yscale  0.8
                                                             :caption caption-text})
+        get-contacts-fn (partial cc/get-contacts cc/make-address)
         paragraphs (->> letter-file-name
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)
@@ -95,7 +71,7 @@
                         (u/insert-at 3 [:pagebreak]))
         contacts (->> addresses-file-name
                       u/file-name->lines
-                      get-contacts
+                      get-contacts-fn
                       (take 1)
                       )
         files-written (write-pdf-files! paragraphs contacts sender-address)]

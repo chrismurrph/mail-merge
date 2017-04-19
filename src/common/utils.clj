@@ -38,8 +38,7 @@
 
 (defn probe-on
   ([x]
-   (-> x
-       pp)
+   (pp x)
    x)
   ([x msg]
    (println msg x)
