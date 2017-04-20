@@ -94,17 +94,7 @@
        (filter ffirst)
        (map #(let [xs' (mapcat second %)]
               (take-nth 2 (cons (first xs') xs'))))
-       #_(reduce #(if (> (count %2) (count %1)) %2 %1))
-       (apply max-key count)
-       ))
+       (apply max-key count)))
 
 (defn x-1 []
   (descending-sequences in))
-
-(defn combine-them [xs']
-  (let [xs (mapcat second xs')]
-    (take-nth 2 (cons (first xs) xs))))
-
-(defn x-2 []
-  (combine-them '([true (7 6)] [true (6 5)] [true (5 4)] [true (4 3)] [true (3 2)])))
-

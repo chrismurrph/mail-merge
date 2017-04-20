@@ -117,10 +117,12 @@
 #_(defn width-of [text]
     (.getWidthPoint (->Chunk text)))
 
-(defn too-big? [max-line-width contact]
+(defn not-too-big? [max-line-width contact]
   (let [width-of (fn [text] (.getWidthPoint (->Chunk text)))]
     (fn [f]
-      (> (width-of (f contact)) max-line-width))))
+      (let [show-as-contact (f contact)]
+        (when (<= (width-of show-as-contact) max-line-width)
+          show-as-contact)))))
 
 (defn make-initial [first-name]
   (str (first first-name) "."))
@@ -141,24 +143,9 @@
   (str first-name " " second-name))
 
 (defn create-name-string [contact]
-  (let [fits-on-line-fn? (complement (too-big? max-line-width contact))]
-    (cond
-      (fits-on-line-fn? longest-name) (longest-name contact)
-      (fits-on-line-fn? shorten-name) (shorten-name contact)
-      (fits-on-line-fn? shorten-name-title-1) (shorten-name-title-1 contact)
-      (fits-on-line-fn? shorten-name-title-2) (shorten-name-title-2 contact)
-      (fits-on-line-fn? shortest-name) (shortest-name contact)
-      )))
-
-#_(defn create-name-string-old [contact]
-    (let [line-too-wide? (too-big? max-line-width)
-          full-name (longest-name contact)]
-      (if (line-too-wide? full-name)
-        (let [shortened-name (shorten-name contact)]
-          (if (line-too-wide? shortened-name)
-            (shortest-name contact)
-            shortened-name))
-        full-name)))
+  (let [fits-on-line-fn? (not-too-big? max-line-width contact)]
+    (->> [longest-name shorten-name shorten-name-title-1 shorten-name-title-2 shortest-name]
+         (some fits-on-line-fn?))))
 
 (defn make-address-label [contact]
   (let [first-line (create-name-string contact)
