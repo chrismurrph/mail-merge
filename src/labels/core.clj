@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [common.utils :as u]
             [labels.pages-spec :as p]
-            [common.common :as cc])
+            [common.common :as cc]
+            [clojure.string :as s])
   (:import (cljpdf.text.pdf PdfWriter ColumnText PdfContentByte BaseFont)
            (cljpdf.text Document Element Chunk Phrase Font FontFactory)))
 
@@ -78,9 +79,9 @@
     chunk))
 
 #_(defn ->Phrase [^Chunk chunk]
-  (let [phrase (Phrase. chunk)]
-    (.setFontAndSize phrase bf 36)
-    phrase))
+    (let [phrase (Phrase. chunk)]
+      (.setFontAndSize phrase bf 36)
+      phrase))
 
 (defn create-positioned-labels [labels]
   (let [{:keys [labels-across labels-down]} page-spec]
@@ -113,21 +114,51 @@
     ;(println texts)
     (printer! texts)))
 
-(defn width-of [text]
-  (.getWidthPoint (->Chunk text)))
+#_(defn width-of [text]
+    (.getWidthPoint (->Chunk text)))
+
+(defn too-big? [max-line-width contact]
+  (let [width-of (fn [text] (.getWidthPoint (->Chunk text)))]
+    (fn [f]
+      (> (width-of (f contact)) max-line-width))))
 
 (defn make-initial [first-name]
   (str (first first-name) "."))
 
+(defn shorten-name [{:keys [title first-name second-name]}]
+  (str title " " (make-initial first-name) " " second-name))
+
+(defn shorten-name-title-1 [{:keys [title first-name second-name]}]
+  (str (-> title (s/split #" ") first) " " first-name " " second-name))
+
+(defn shorten-name-title-2 [{:keys [title first-name second-name]}]
+  (str (-> title (s/split #" ") first) " " (make-initial first-name) " " second-name))
+
+(defn longest-name [{:keys [title first-name second-name]}]
+  (str title " " first-name " " second-name))
+
+(defn shortest-name [{:keys [title first-name second-name]}]
+  (str first-name " " second-name))
+
 (defn create-name-string [contact]
-  (let [{:keys [title first-name second-name]} contact
-        full-name (str title " " first-name " " second-name)]
-    (if (>= (width-of full-name) max-line-width)
-      (let [shortened-name (str title " " (make-initial first-name) " " second-name)]
-        (if (>= (width-of shortened-name) max-line-width)
-          (str first-name " " second-name)
-          shortened-name))
-      full-name)))
+  (let [fits-on-line-fn? (complement (too-big? max-line-width contact))]
+    (cond
+      (fits-on-line-fn? longest-name) (longest-name contact)
+      (fits-on-line-fn? shorten-name) (shorten-name contact)
+      (fits-on-line-fn? shorten-name-title-1) (shorten-name-title-1 contact)
+      (fits-on-line-fn? shorten-name-title-2) (shorten-name-title-2 contact)
+      (fits-on-line-fn? shortest-name) (shortest-name contact)
+      )))
+
+#_(defn create-name-string-old [contact]
+    (let [line-too-wide? (too-big? max-line-width)
+          full-name (longest-name contact)]
+      (if (line-too-wide? full-name)
+        (let [shortened-name (shorten-name contact)]
+          (if (line-too-wide? shortened-name)
+            (shortest-name contact)
+            shortened-name))
+        full-name)))
 
 (defn make-address-label [contact]
   (let [first-line (create-name-string contact)
