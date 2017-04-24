@@ -75,8 +75,8 @@
                                                             :yscale  0.8
                                                             :caption caption-text})
         ;; :align :left, :center, :right, :justified
-        insert-personal-experience-fn (cc/insert-cation-paragraph
-                                        caption-paragraph-lines-file-name
+        insert-personal-experience-fn (cc/insert-cation-paragraph-2
+                                        caption-paragraph-file-name
                                         {:n      (inc image-at)
                                          :indent 55
                                          :align  :justified})

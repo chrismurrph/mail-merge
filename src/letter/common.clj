@@ -16,5 +16,5 @@
                                    :border       false
                                    :cell-border  false
                                    :spacing      -5}
-                           ] (create-addr-rows left-address right-address)) ["" "" (u/formatted-now)])]
+                           ] (create-addr-rows left-address right-address)) [(u/formatted-now) "" ""])]
     [:paragraph {:indent cc/indent} table]))

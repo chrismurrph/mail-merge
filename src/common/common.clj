@@ -103,7 +103,7 @@
 ;;
 ;; So this one takes lines so we can limit each line's length.
 ;;
-(defn insert-cation-paragraph [caption-file-name {:keys [n indent align]}]
+(defn insert-cation-paragraph-1 [caption-file-name {:keys [n indent align]}]
   (fn [paragraphs]
     (assert (vector? paragraphs))
     (let [text-lines (->> caption-file-name
@@ -113,6 +113,21 @@
                            :indent  indent
                            :leading 14}]
                          (lines->paragraph-chunks text-lines))
+                 paragraphs))))
+
+(defn insert-cation-paragraph-2 [caption-file-name {:keys [n indent align]}]
+  (fn [paragraphs]
+    (assert (vector? paragraphs))
+    (let [text (->> caption-file-name
+                    u/file-name->lines
+                    first)]
+      (insert-at n [:paragraph
+                    {:align        align
+                     :indent-left  indent
+                     :indent-right indent
+                     :leading      14
+                     :spacing-after 20}
+                    [:chunk {:size smaller} text]]
                  paragraphs))))
 
 (defn insert-image [image-file-name {:keys [n xscale yscale caption]}]
