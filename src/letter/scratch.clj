@@ -84,17 +84,43 @@
 
 (defn first-seconds [[h & t]]
   (into (vec h) (map second t)))
-
 (def in [3 2 1 0 -1 2 7 6 7 6 5 4 3 2])
-(defn descending-sequences [xs]
-  (->> xs
-       (partition 2 1)
-       (map (juxt (fn [[x y]] (> x y)) identity))
-       (partition-by first)
-       (filter ffirst)
-       (map #(let [xs' (mapcat second %)]
-              (take-nth 2 (cons (first xs') xs'))))
-       (apply max-key count)))
+(defn greatest-continuous [op xs]
+  (let [op-pair? (fn [[x y]] (op x y))
+        take-every-second #(take-nth 2 (cons (first %) %))
+        make-canonical #(take-every-second (apply concat %))]
+    (->> xs
+         (partition 2 1)
+         (partition-by op-pair?)
+         (filter (comp op-pair? first))
+         (map make-canonical)
+         (apply max-key count))))
 
 (defn x-1 []
-  (descending-sequences in))
+  (greatest-continuous > in))
+
+(defn step-state-hof [op]
+  (fn [{:keys [unprocessed current answer]}]
+    (let [[x y & more] unprocessed]
+      (let [next-current (if (op x y)
+                           (conj current y)
+                           [y])
+            next-answer (if (> (count next-current) (count answer))
+                          next-current
+                          answer)]
+        {:unprocessed (cons y more)
+         :current     next-current
+         :answer      next-answer}))))
+
+(defn x-2 []
+  (let [iter (step-state-hof >)]
+    (iter (iter {:unprocessed (rest in)
+                 :current     (vec (take 1 in))}))))
+
+(defn x-3 []
+  (let [step-state (step-state-hof >)]
+    (->> (iterate step-state {:unprocessed (rest in)
+                              :current     (vec (take 1 in))})
+         (drop (- (count in) 2))
+         first
+         :answer)))

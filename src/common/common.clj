@@ -94,17 +94,38 @@
          (insert-at n (heading text))
          (insert-at n [:pagebreak]))))
 
+(defn lines->paragraph-chunks [text-lines]
+  (-> (for [line text-lines]
+        [:chunk {:size smaller} (str line "\n")])
+      vec
+      (conj [:spacer])))
+
+;;
+;; So this one takes lines so we can limit each line's length.
+;;
+(defn insert-cation-paragraph [caption-file-name {:keys [n indent align]}]
+  (fn [paragraphs]
+    (assert (vector? paragraphs))
+    (let [text-lines (->> caption-file-name
+                          u/file-name->lines)]
+      (insert-at n (into [:paragraph
+                          {:align   align
+                           :indent  indent
+                           :leading 14}]
+                         (lines->paragraph-chunks text-lines))
+                 paragraphs))))
+
 (defn insert-image [image-file-name {:keys [n xscale yscale caption]}]
   (fn [paragraphs]
     (assert (vector? paragraphs))
     (insert-at n [:paragraph
-                    {:align  :center}
-                    [:image {:xscale xscale
-                             :yscale yscale}
-                     (-> image-file-name io/resource)]
-                    [:chunk {:size  smaller} caption]
-                    [:spacer]]
-                 paragraphs)))
+                  {:align :center}
+                  [:image {:xscale xscale
+                           :yscale yscale}
+                   (-> image-file-name io/resource)]
+                  [:chunk {:size smaller} caption]
+                  [:spacer]]
+               paragraphs)))
 
 (defn insert-many [many-of existing]
   (vec (concat many-of existing)))

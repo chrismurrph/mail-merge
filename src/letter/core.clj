@@ -7,10 +7,10 @@
     [letter.common :as c]
     [common.common :as cc]))
 
-(def letter-file-name "mm/merge-letter-5.md")
-(def addresses-file-name-old "mm/addresses.txt")
-(def addresses-file-name-new "mm/Senators.txt")
-(def addresses-file-name addresses-file-name-new)
+(def input-letter-file-name "mm/merge-letter-5.md")
+(def caption-paragraph-file-name "mm/personal_paragraph.txt")
+(def caption-paragraph-lines-file-name "mm/personal_paragraph_lines.txt")
+(def addresses-file-name "mm/Senators.txt")
 (def windmills-file-name "mm/Another_Advert.jpg")
 (def misc-in-file-name "mm/misc.edn")
 (def output-dir "output/letters")
@@ -55,7 +55,7 @@
           file-name (address->file-name contact-info)
           letter (-> paragraphs
                      (cc/insert-many [[:spacer] [:spacer]
-                                      (cc/create-spaced-paragraph (str (make-space signature-indent) "Yours faithfully"))
+                                      (cc/create-spaced-paragraph (str (make-space signature-indent) "Yours faithfully,"))
                                       [:spacer] [:spacer] [:spacer] [:spacer] [:spacer]
                                       (cc/create-spaced-paragraph
                                         (str (make-space signature-indent) (str first-person (make-space 50) second-person)))])
@@ -68,17 +68,25 @@
 ;; When make proper function will use all contacts (not take 1 contact and take 3 files)
 ;;
 (defn produce-letters []
-  (let [{:keys [caption-text sender-address first-person second-person]} (u/get-edn misc-in-file-name)
-        insert-img-fn (cc/insert-image windmills-file-name {:n       1
+  (let [image-at 5
+        {:keys [caption-text sender-address first-person second-person]} (u/get-edn misc-in-file-name)
+        insert-img-fn (cc/insert-image windmills-file-name {:n       image-at
                                                             :xscale  0.8
                                                             :yscale  0.8
                                                             :caption caption-text})
+        ;; :align :left, :center, :right, :justified
+        insert-personal-experience-fn (cc/insert-cation-paragraph
+                                        caption-paragraph-lines-file-name
+                                        {:n      (inc image-at)
+                                         :indent 55
+                                         :align  :justified})
         get-contacts-fn (partial cc/get-contacts cc/make-address)
-        paragraphs (->> letter-file-name
+        paragraphs (->> input-letter-file-name
                         u/file-name->lines
                         (mapv cc/create-spaced-paragraph)
                         insert-img-fn
-                        ;(u/insert-at 3 [:pagebreak])
+                        insert-personal-experience-fn
+                        (cc/insert-at 5 [:pagebreak])
                         )
         contacts (->> addresses-file-name
                       u/file-name->lines
