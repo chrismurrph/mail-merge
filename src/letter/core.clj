@@ -7,7 +7,7 @@
     [letter.common :as c]
     [common.common :as cc]))
 
-(def input-letter-file-name "mm/merge-letter-5.md")
+(def input-letter-file-name "mm/merge-letter-6.md")
 (def caption-paragraph-file-name "mm/personal_paragraph.txt")
 (def caption-paragraph-lines-file-name "mm/personal_paragraph_lines.txt")
 (def addresses-file-name "mm/Senators.txt")

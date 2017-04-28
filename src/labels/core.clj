@@ -27,7 +27,7 @@
 (def labels-per-page
   (let [{:keys [labels-across labels-down]} page-spec]
     (* labels-across labels-down)))
-(def label-indent 0.4)
+(def label-indent 0.1)
 (def next-line-space 0.45)
 (def max-line-width
   (let [{:keys [label-width]} page-spec]
@@ -45,26 +45,27 @@
                                              (u/round3 (- width max-line-width))))
       (ColumnText/showTextAligned canvas, Element/ALIGN_LEFT, (Phrase. text), x-pts, y-pts, 0))))
 
+;; Not just top left corner of label, but indented slightly so there's margins in the label itself
+(defn grid-pos->label-pos [page-spec [grid-x grid-y]]
+  (let [{:keys [page-top-margin page-side-margin vertical-pitch horizontal-pitch]} page-spec
+        label-x (+ label-indent page-side-margin (* grid-x horizontal-pitch))
+        label-y (+ label-indent page-top-margin (* grid-y vertical-pitch))]
+    [(u/round3 label-x) (u/round3 label-y)]))
+
 ;; Label printing is (in our case addresses) to positions in a grid.
-;; Given [0 0], the top left label, and the number of lines that need to be printed,
-;; this function will return a vector of [x y], one for each line.
+;; e.g. Given [0 0], the top left label, and the number of lines that need to be printed,
+;; this function will return a vector of [x y], one vector for each line.
 ;; So this function ensures that the address is vertically centered within the bounds of the label.
 ;; Well possibly - for now we will just put it in the top left corner: see label-indent
 (defn print-at-grid-pos [^PdfWriter writer]
   (let [canvas (.getDirectContentUnder writer)
-        print-text! (print-at-cms canvas)
-        {:keys [page-top-margin page-side-margin vertical-pitch horizontal-pitch]} page-spec]
-    (fn [[grid-x grid-y] text-lines]
+        print-text! (print-at-cms canvas)]
+    (fn [grid-pos text-lines]
       (assert (vector? text-lines))
-      (let [
-            ;; top left corner of label
-            label-x (+ page-side-margin (* grid-x horizontal-pitch))
-            label-y (+ page-top-margin (* grid-y vertical-pitch))
-            x (+ label-indent label-x)
-            y (+ label-indent label-y)
+      (let [[label-x label-y] (grid-pos->label-pos page-spec grid-pos)
             coords (map (juxt identity
-                              (fn [_] (u/round3 x))
-                              (fn [n] (u/round3 (+ y (* n next-line-space)))))
+                              (fn [_] (u/round3 label-x))
+                              (fn [n] (u/round3 (+ label-y (* n next-line-space)))))
                         (range 0 (count text-lines)))]
         (doseq [[n x y] coords]
           ;(println "printing at" x y)

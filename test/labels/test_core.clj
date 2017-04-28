@@ -30,3 +30,6 @@
 (defn x-5 []
   (c/all-adderss-labels))
 
+(defn x-6 []
+  (c/grid-pos->label-pos c/page-spec [2 0]))
+
