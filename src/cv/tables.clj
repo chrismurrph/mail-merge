@@ -66,10 +66,10 @@
 (defn jobs-table [long-version-fn jobs]
   (let [create-job-row-fn (partial create-job-row long-version-fn)
         table (into [:pdf-table
-                     (assoc table-props :cell-border true :width-percent 95)
+                     (assoc table-props :cell-border true :width-percent 100)
                      [1 1 4 6]]
                     (mapv create-job-row-fn jobs))]
-    [:paragraph {:indent cc/indent} table]))
+    [:paragraph {:indent-left (+ cc/indent 0) :indent-right cc/indent} table]))
 
 (defn create-referees-row [{:keys [name phone handle email org role]}]
   (assert name)

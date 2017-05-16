@@ -59,18 +59,30 @@
     [:anchor (assoc anchor-attributes :target (link-fn text)) text]))
 
 (def indent 5)
+(def narrow-indent 35)
 
-(defn create-spaced-paragraph
+(defn create-spaced-paragraph-traditional
   ([text]
-   (create-spaced-paragraph default-text->chunks text))
+   (create-spaced-paragraph-traditional default-text->chunks text))
   ([text->chunks text]
    (conj (into [:paragraph {:indent indent}] (text->chunks text)) [:spacer])))
+
+(defn create-spaced-paragraph-narrow
+  ([text]
+   (create-spaced-paragraph-narrow default-text->chunks text))
+  ([text->chunks text]
+   (conj (into [:paragraph {:indent-left  narrow-indent
+                            :indent-right narrow-indent
+                            :align  :justified}] (text->chunks text)) [:spacer])))
 
 (def bigger 11)
 (def smaller 9)
 
-(defn heading [text]
+(defn heading-traditional [text]
   [:heading {:style {:size bigger} :indent indent} text])
+
+(defn heading-narrow [text]
+  [:heading {:style {:size bigger} :indent narrow-indent} text])
 
 ;;
 ;; x to be inserted at n in vector v
@@ -78,20 +90,27 @@
 (defn insert-at [n x v]
   (vec (concat (subvec v 0 n) (vector x) (subvec v n))))
 
-(defn insert-heading [text n]
+(defn insert-heading-narrow [text n]
   (fn [paragraphs]
     (assert (vector? paragraphs))
     ;; TODO
     ;; Can't seem to get a font that is a particular size and underlined
     ;; I can do bold or underlined on their own, but both are too big
     (->> paragraphs
-         (insert-at n (heading text)))))
+         (insert-at n (heading-narrow text)))))
+
+(defn insert-page-break-heading-narrow [text n]
+  (fn [paragraphs]
+    (assert (vector? paragraphs))
+    (->> paragraphs
+         (insert-at n (heading-narrow text))
+         (insert-at n [:pagebreak]))))
 
 (defn insert-page-break-heading [text n]
   (fn [paragraphs]
     (assert (vector? paragraphs))
     (->> paragraphs
-         (insert-at n (heading text))
+         (insert-at n (heading-traditional text))
          (insert-at n [:pagebreak]))))
 
 (defn lines->paragraph-chunks [text-lines]

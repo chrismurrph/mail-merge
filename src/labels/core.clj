@@ -27,7 +27,13 @@
 (def labels-per-page
   (let [{:keys [labels-across labels-down]} page-spec]
     (* labels-across labels-down)))
-(def label-indent 0.1)
+(def label-indent 0.3)
+
+;;
+;; For an unknown reson PDFs are printed too high on printer here and at OfficeWorks. This adjustment fixes that
+;; problem.
+;;
+(def pdf-vert-adjust 0.6)
 (def next-line-space 0.45)
 (def max-line-width
   (let [{:keys [label-width]} page-spec]
@@ -49,7 +55,7 @@
 (defn grid-pos->label-pos [page-spec [grid-x grid-y]]
   (let [{:keys [page-top-margin page-side-margin vertical-pitch horizontal-pitch]} page-spec
         label-x (+ label-indent page-side-margin (* grid-x horizontal-pitch))
-        label-y (+ label-indent page-top-margin (* grid-y vertical-pitch))]
+        label-y (+ label-indent page-top-margin pdf-vert-adjust (* grid-y vertical-pitch))]
     [(u/round3 label-x) (u/round3 label-y)]))
 
 ;; Label printing is (in our case addresses) to positions in a grid.

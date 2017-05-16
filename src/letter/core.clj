@@ -9,7 +9,6 @@
 
 (def input-letter-file-name "mm/merge-letter-6.md")
 (def caption-paragraph-file-name "mm/personal_paragraph.txt")
-(def caption-paragraph-lines-file-name "mm/personal_paragraph_lines.txt")
 (def addresses-file-name "mm/Senators.txt")
 (def windmills-file-name "mm/Another_Advert.jpg")
 (def misc-in-file-name "mm/misc.edn")
@@ -30,7 +29,7 @@
 
 (defn dear-sir [{:keys [title first-name second-name]}]
   (fn [paragraphs]
-    (let [para (cc/create-spaced-paragraph (str "Dear " (first (s/split title #" ")) " " second-name ","))]
+    (let [para (cc/create-spaced-paragraph-traditional (str "Dear " (first (s/split title #" ")) " " second-name ","))]
       (->> paragraphs
            (cc/insert-at 0 para)
            (cc/insert-at 0 [:spacer])
@@ -55,9 +54,9 @@
           file-name (address->file-name contact-info)
           letter (-> paragraphs
                      (cc/insert-many [[:spacer] [:spacer]
-                                      (cc/create-spaced-paragraph (str (make-space signature-indent) "Yours faithfully,"))
+                                      (cc/create-spaced-paragraph-traditional (str (make-space signature-indent) "Yours faithfully,"))
                                       [:spacer] [:spacer] [:spacer] [:spacer] [:spacer]
-                                      (cc/create-spaced-paragraph
+                                      (cc/create-spaced-paragraph-traditional
                                         (str (make-space signature-indent) (str first-person (make-space 50) second-person)))])
                      formal-intro-fn
                      address-headers-fn)]
@@ -83,7 +82,7 @@
         get-contacts-fn (partial cc/get-contacts cc/make-address)
         paragraphs (->> input-letter-file-name
                         u/file-name->lines
-                        (mapv cc/create-spaced-paragraph)
+                        (mapv cc/create-spaced-paragraph-traditional)
                         insert-img-fn
                         insert-personal-experience-fn
                         (cc/insert-at 5 [:pagebreak])
@@ -91,7 +90,7 @@
         contacts (->> addresses-file-name
                       u/file-name->lines
                       get-contacts-fn
-                      (take 1)
+                      #_(take 1)
                       )
         files-written (write-pdf-files! paragraphs contacts sender-address first-person second-person)]
-    (str "Written " (count contacts) " pdf files (first 3): " (seq (map symbol (take 3 files-written))))))
+    (str "Written " (count contacts) " pdf files: " (seq (map symbol files-written)))))

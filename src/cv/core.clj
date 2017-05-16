@@ -42,27 +42,38 @@
 (defn make-cv [[name phone email contact-links address keywords libs] referees jobs paragraphs cv-me-file-name]
   (->> []
        ;; spacer only works well when table has a border
-       (cc/insert-many [(cc/heading "Referees") #_[:spacer] (t/referees-table referees)])
+       (cc/insert-many [(cc/heading-traditional "Referees") #_[:spacer]
+                        (t/referees-table referees)])
        (cc/insert-at 0 [:spacer])
-       (cc/insert-many [(cc/heading "Employment History") [:spacer] (t/jobs-table long-version-fn jobs)])
+       (cc/insert-many [[:pagebreak]
+                        (cc/heading-traditional "Employment History")
+                        [:spacer]
+                        (t/jobs-table long-version-fn jobs)])
        (cc/insert-many paragraphs)
        (cc/insert-at 0 [:spacer])
-       (cc/insert-at 0 (t/image-table name phone email contact-links address keywords libs cv-me-file-name))))
+       (cc/insert-at 0 [:spacer])
+       (cc/insert-at 0 [:spacer])
+       (cc/insert-at 0 (t/image-table name phone email contact-links address keywords libs cv-me-file-name))
+       ))
 
 (defn produce-cv []
-  (let [first-heading-fn (cc/insert-heading "Current Position" 0)
-        second-heading-fn (cc/insert-heading "Clojure" 6)
-        third-heading-fn (cc/insert-heading "About Myself" 9)
+  (let [first-heading-fn (cc/insert-heading-narrow "Current Position" 0)
+        second-heading-fn (cc/insert-page-break-heading-narrow "Clojure" 6)
+        third-heading-fn (cc/insert-heading-narrow "About Myself" 9)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
         paragraphs (->> cv-in-file-name
                         u/file-name->lines
-                        (mapv (partial cc/create-spaced-paragraph
+                        (mapv (partial cc/create-spaced-paragraph-narrow
                                        (partial cc/word-in-text->chunks
                                                 [{:search-word "installed" :op cc/make-italicized-chunk}
                                                  {:search-word "weather" :op cc/make-italicized-chunk}
                                                  {:search-word "logician" :op (cc/anchor-text->anchor long-version-fn)}
                                                  {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-fn)}])))
-                        (cc/insert-at 3 [:paragraph (c/image-here coy-logo 20 0 -9) [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title] [:spacer]])
+                        (cc/insert-at 3 [:paragraph
+                                         {:indent cc/narrow-indent}
+                                         (c/image-here coy-logo 20 0 -9)
+                                         [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title]
+                                         [:spacer]])
                         first-heading-fn
                         second-heading-fn
                         third-heading-fn)
