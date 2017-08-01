@@ -10,7 +10,7 @@
 (def cell-props {:valign :top :align :left})
 (def middle-props {:valign :middle :align :center})
 (def middle-left-props {:valign :middle :align :left})
-(def table-props {:width-percent 100 :horizonatal-align :right})
+(def table-props {:width-percent 100 :horizontal-align :right})
 
 (defn create-my-links-table [contact-links]
   (let [img-fn c/image-here]
@@ -84,7 +84,7 @@
 
 (defn referees-table [referees]
   (let [table (into [:pdf-table
-                     (assoc table-props :cell-border false :horizonatal-align :left)
+                     (assoc table-props :cell-border false :horizontal-align :left)
                      [2 2.5 3 4]]
                     (mapv create-referees-row referees))]
     [:paragraph {:indent 1.5} table]))

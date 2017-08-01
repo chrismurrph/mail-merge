@@ -7,7 +7,7 @@
             [clojure.string :as s]
             [cv.tables :as t]))
 
-(def cv-in-file-name "cv/paragraphs-2.md")
+(def cv-in-file-name "cv/paragraphs-3.md")
 (def cv-summary-in-file-name "cv/summary-info.md")
 (def cv-jobs-in-file-name "cv/jobs.edn")
 (def cv-referees-in-file-name "cv/referees.edn")
@@ -59,7 +59,7 @@
 (defn produce-cv []
   (let [first-heading-fn (cc/insert-heading-narrow "Current Position" 0)
         second-heading-fn (cc/insert-page-break-heading-narrow "Clojure" 6)
-        third-heading-fn (cc/insert-heading-narrow "About Myself" 9)
+        third-heading-fn (cc/insert-heading-narrow "About Myself" 12)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
         paragraphs (->> cv-in-file-name
                         u/file-name->lines
@@ -67,7 +67,13 @@
                                        (partial cc/word-in-text->chunks
                                                 [{:search-word "installed" :op cc/make-italicized-chunk}
                                                  {:search-word "weather" :op cc/make-italicized-chunk}
+                                                 ;; These words are in a file. Resist the urge to improve.
                                                  {:search-word "logician" :op (cc/anchor-text->anchor long-version-fn)}
+                                                 {:search-word "date intervals" :op (cc/anchor-text->anchor long-version-fn)}
+                                                 {:search-word "update vector inside reduce" :op (cc/anchor-text->anchor long-version-fn)}
+                                                 {:search-word "element between each pair" :op (cc/anchor-text->anchor long-version-fn)}
+                                                 {:search-word "date periods" :op (cc/anchor-text->anchor long-version-fn)}
+                                                 {:search-word "hobby project" :op (cc/anchor-text->anchor long-version-fn)}
                                                  {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-fn)}])))
                         (cc/insert-at 3 [:paragraph
                                          {:indent cc/narrow-indent}
