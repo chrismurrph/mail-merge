@@ -7,6 +7,9 @@
             [clojure.string :as s]
             [cv.tables :as t]))
 
+;;
+;; Note to self: I've done paragraphs-4, but it is probably too wordy/technical, so keeping paragraphs-3 for now
+;;
 (def cv-in-file-name "cv/paragraphs-3.md")
 (def cv-summary-in-file-name "cv/summary-info.md")
 (def cv-jobs-in-file-name "cv/jobs.edn")

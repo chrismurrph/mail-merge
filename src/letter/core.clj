@@ -63,9 +63,6 @@
       (-write-pdf-file! letter (str output-dir "/" file-name))
       file-name)))
 
-;;
-;; When make proper function will use all contacts (not take 1 contact and take 3 files)
-;;
 (defn produce-letters []
   (let [image-at 5
         {:keys [caption-text sender-address first-person second-person]} (u/get-edn misc-in-file-name)
