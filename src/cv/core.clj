@@ -5,12 +5,14 @@
             [clj-pdf.core :as pdf]
             [common.utils :as u]
             [clojure.string :as s]
-            [cv.tables :as t]))
+            [cv.tables :as t]
+            [common.dev :as dev]))
 
 ;;
-;; Note to self: I've done paragraphs-4, but it is probably too wordy/technical, so keeping paragraphs-3 for now
+;; Note to self: I've done paragraphs-4, but it is probably too wordy/technical, so keeping paragraphs-3 for now.
+;; In Aug 2018 it became paragraphs-5.
 ;;
-(def cv-in-file-name "cv/paragraphs-3.md")
+(def cv-in-file-name "cv/paragraphs-5.md")
 (def cv-summary-in-file-name "cv/summary-info.md")
 (def cv-jobs-in-file-name "cv/jobs.edn")
 (def cv-referees-in-file-name "cv/referees.edn")
@@ -30,17 +32,19 @@
      cv]
     file-name))
 
-(defn long-version [cv-text-links-filename]
+(defn long-version-hof [cv-text-links-filename]
   (let [links (->> cv-text-links-filename
                    u/file-name->lines
                    (map #(s/split % #","))
+                   dev/probe-off
                    (into {}))]
     (fn [found-str]
       (let [res (get links found-str)]
         (assert res (str "Not found a link target for " found-str))
         res))))
 
-(def long-version-fn (long-version cv-text-links-file-name))
+(def long-version-f (long-version-hof cv-text-links-file-name))
+;(def long-version-f identity)
 
 (defn make-cv [[name phone email contact-links address keywords libs] referees jobs paragraphs cv-me-file-name]
   (->> []
@@ -51,7 +55,7 @@
        (cc/insert-many [[:pagebreak]
                         (cc/heading-traditional "Employment History")
                         [:spacer]
-                        (t/jobs-table long-version-fn jobs)])
+                        (t/jobs-table long-version-f jobs)])
        (cc/insert-many paragraphs)
        (cc/insert-at 0 [:spacer])
        (cc/insert-at 0 [:spacer])
@@ -60,7 +64,7 @@
        ))
 
 (defn produce-cv []
-  (let [first-heading-fn (cc/insert-heading-narrow "Current Position" 0)
+  (let [first-heading-fn (cc/insert-heading-narrow "Current Situation" 0)
         second-heading-fn (cc/insert-page-break-heading-narrow "Clojure" 6)
         third-heading-fn (cc/insert-heading-narrow "About Myself" 12)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
@@ -71,13 +75,14 @@
                                                 [{:search-word "installed" :op cc/make-italicized-chunk}
                                                  {:search-word "weather" :op cc/make-italicized-chunk}
                                                  ;; These words are in a file. Resist the urge to improve.
-                                                 {:search-word "logician" :op (cc/anchor-text->anchor long-version-fn)}
-                                                 {:search-word "date intervals" :op (cc/anchor-text->anchor long-version-fn)}
-                                                 {:search-word "update vector inside reduce" :op (cc/anchor-text->anchor long-version-fn)}
-                                                 {:search-word "element between each pair" :op (cc/anchor-text->anchor long-version-fn)}
-                                                 {:search-word "date periods" :op (cc/anchor-text->anchor long-version-fn)}
-                                                 {:search-word "hobby project" :op (cc/anchor-text->anchor long-version-fn)}
-                                                 {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-fn)}])))
+                                                 {:search-word "website" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "logician" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "date intervals" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "update vector inside reduce" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "element between each pair" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "date periods" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "hobby project" :op (cc/anchor-text->anchor long-version-f)}
+                                                 {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-f)}])))
                         (cc/insert-at 3 [:paragraph
                                          {:indent cc/narrow-indent}
                                          (c/image-here coy-logo 20 0 -9)
