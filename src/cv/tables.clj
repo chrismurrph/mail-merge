@@ -11,6 +11,7 @@
 (def cell-props {:valign :top :align :left})
 (def middle-props {:valign :middle :align :center})
 (def middle-left-props {:valign :middle :align :left})
+(def top-left-props {:valign :top :align :left})
 (def table-props {:width-percent 100 :horizontal-align :right})
 
 (defn img-f [social]
@@ -22,21 +23,20 @@
 
 (defn create-my-links-table [contact-links]
   (dev/log-off "Num contact links" (count contact-links))
-  (let [img-fn c/image-here]
-    [:pdf-table
-     (assoc table-props :cell-border false)
-     ;; Medium, SO, Github, Slack
-     ;; With Medium I point to one article (as there only is one so far) and have to miss out the @ as read-string
-     ;; doesn't like it - never-the-less the lack of a @ seems to get resolved.
-     [1 8 1 8]
-     [[:pdf-cell (top middle-props) (img-f "m")]
-      [:pdf-cell (top middle-left-props) [:paragraph (first contact-links)]]
-      [:pdf-cell (top middle-props) (img-f "so")]
-      [:pdf-cell (top middle-left-props) [:paragraph (second contact-links)]]]
-     [[:pdf-cell (top middle-props) (img-f "gh")]
-      [:pdf-cell (top middle-left-props) [:paragraph (u/third contact-links)]]
-      [:pdf-cell (top middle-props) (img-f "s")]
-      [:pdf-cell (top middle-left-props) [:paragraph (u/fourth contact-links)]]]]))
+  [:pdf-table
+   (assoc table-props :cell-border false)
+   ;; Medium, SO, Github, Slack
+   ;; With Medium I point to one article (as there only is one so far) and have to miss out the @ as read-string
+   ;; doesn't like it - never-the-less the lack of a @ seems to get resolved.
+   [1 8 1 8]
+   [[:pdf-cell (top middle-props) (img-f "m")]
+    [:pdf-cell (top middle-left-props) [:paragraph (first contact-links)]]
+    [:pdf-cell (top middle-props) (img-f "so")]
+    [:pdf-cell (top middle-left-props) [:paragraph (second contact-links)]]]
+   [[:pdf-cell (top middle-props) (img-f "gh")]
+    [:pdf-cell (top middle-left-props) [:paragraph (u/third contact-links)]]
+    [:pdf-cell (top middle-props) (img-f "s")]
+    [:pdf-cell (top middle-left-props) [:paragraph (u/fourth contact-links)]]]])
 
 (defn make-anchor [link text]
   [:anchor (assoc cc/anchor-attributes :target link) (str text)])
@@ -110,20 +110,30 @@
                     (mapv create-referees-row referees))]
     [:paragraph {:indent 1.5} table]))
 
-(defn create-social-row [{:keys [year site desc link]}]
-  (assert year)
+(defn create-social-bi-cell [{:keys [site desc link]}]
   (assert site)
   (assert desc)
   (assert link)
   [[:pdf-cell middle-props (img-f site)]
-   [:pdf-cell middle-props [:paragraph (make-anchor link desc)]]
-   ])
+   [:pdf-cell top-left-props [:phrase (make-anchor link desc)]]])
+
+(def empty-bi-cell
+  [[:pdf-cell middle-props ""]
+   [:pdf-cell top-left-props [:phrase ""]]])
+
+(defn create-social-row [[link-a link-b]]
+  (into (create-social-bi-cell link-a) (if link-b
+                                         (create-social-bi-cell link-b)
+                                         empty-bi-cell)))
 
 (defn social-table [social]
   (let [table (into [:pdf-table
-                     (assoc table-props :cell-border true
+                     (assoc table-props :cell-border false
                                         :horizontal-align :left
-                                        :width-percent 60)
-                     [1 8 1 8]]
-                    (mapv create-social-row social))]
+                                        :width-percent 100)
+                     [1 9 1 9]]
+                    (->> social
+                         (partition-all 2)
+                         (mapv create-social-row)
+                         dev/probe-off))]
     [:paragraph {:indent-left (+ cc/narrow-indent 0) :indent-right cc/narrow-indent} table]))
