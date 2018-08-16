@@ -1,7 +1,8 @@
 (ns common.common
   (:require [clojure.java.io :as io]
             [common.utils :as u]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [common.dev :as dev]))
 
 (defn split-by-commas [addr]
   (assert addr (str "Must have address to split by commas"))
@@ -90,12 +91,14 @@
 (defn insert-at [n x v]
   (vec (concat (subvec v 0 n) (vector x) (subvec v n))))
 
+;; TODO
+;; Can't seem to get a font that is a particular size and underlined
+;; I can do bold or underlined on their own, but both are too big
+
 (defn insert-heading-narrow [text n]
   (fn [paragraphs]
     (assert (vector? paragraphs))
-    ;; TODO
-    ;; Can't seem to get a font that is a particular size and underlined
-    ;; I can do bold or underlined on their own, but both are too big
+    (assert (<= n (count paragraphs)) (str "inserting at " n " when have only " (count paragraphs) " paragraphs"))
     (->> paragraphs
          (insert-at n (heading-narrow text)))))
 

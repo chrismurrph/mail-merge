@@ -2,7 +2,8 @@
   (:require [cv.common :as c]
             [common.common :as cc]
             [clojure.string :as s]
-            [common.utils :as u]))
+            [common.utils :as u]
+            [common.dev :as dev]))
 
 (defn top [props]
   (assoc props :valign :top))
@@ -12,25 +13,45 @@
 (def middle-left-props {:valign :middle :align :left})
 (def table-props {:width-percent 100 :horizontal-align :right})
 
+(defn img-f [social]
+  (condp = social
+    "so" (c/image-here "cv/apple-touch-icon.png" 11 0 -1)
+    "m" (c/image-here "cv/medium.png" 6 1 0)
+    "gh" (c/image-here "cv/github-2.png" 1.6 0)
+    "s" (c/image-here "cv/slack.png" 3 -3)))
+
 (defn create-my-links-table [contact-links]
+  (dev/log-off "Num contact links" (count contact-links))
   (let [img-fn c/image-here]
     [:pdf-table
      (assoc table-props :cell-border false)
+     ;; Medium, SO, Github, Slack
+     ;; With Medium I point to one article (as there only is one so far) and have to miss out the @ as read-string
+     ;; doesn't like it - never-the-less the lack of a @ seems to get resolved.
      [1 8 1 8]
-     [[:pdf-cell (top middle-props) (img-fn "cv/github-2.png" 1.6 0)] [:pdf-cell (top middle-left-props) [:paragraph (first contact-links)]]
-      [:pdf-cell (top middle-props) (img-fn "cv/apple-touch-icon.png" 11 0 1)] [:pdf-cell (top middle-left-props) [:paragraph (second contact-links)]]]
-     [[:pdf-cell (top middle-props) (img-fn "cv/linkedin-button.png" 7 2 2)] [:pdf-cell (top middle-left-props) [:paragraph (u/third contact-links)]]
-      [:pdf-cell (top middle-props) (img-fn "cv/slack.png" 3 -3)] [:pdf-cell (top middle-left-props) [:paragraph (u/fourth contact-links)]]]]))
+     [[:pdf-cell (top middle-props) (img-f "m")]
+      [:pdf-cell (top middle-left-props) [:paragraph (first contact-links)]]
+      [:pdf-cell (top middle-props) (img-f "so")]
+      [:pdf-cell (top middle-left-props) [:paragraph (second contact-links)]]]
+     [[:pdf-cell (top middle-props) (img-f "gh")]
+      [:pdf-cell (top middle-left-props) [:paragraph (u/third contact-links)]]
+      [:pdf-cell (top middle-props) (img-f "s")]
+      [:pdf-cell (top middle-left-props) [:paragraph (u/fourth contact-links)]]]]))
+
+(defn make-anchor [link text]
+  [:anchor (assoc cc/anchor-attributes :target link) (str text)])
 
 (defn create-intro [name phone email contacts address keywords libs]
   (assert (string? contacts))
   (let [props middle-left-props
         details (s/split contacts #",")
         links (->> details
+                   dev/probe-off
                    (map read-string)
+                   dev/probe-off
                    (map (juxt (comp str first) (comp str second))))
         contact-links (mapv (fn [[link user-id]]
-                              [:anchor (assoc cc/anchor-attributes :target link) (str #_(short-version link) #_" " user-id)]) links)]
+                              (make-anchor link user-id)) links)]
     [:pdf-table (assoc table-props :cell-border true)
      [1 6.5]
      [[:pdf-cell props ""] [:pdf-cell {:align  :center
@@ -43,7 +64,7 @@
      [[:pdf-cell cell-props "Links"] [:pdf-cell props (create-my-links-table contact-links)]]
      [[:pdf-cell props "Address"] [:pdf-cell props address]]
      [[:pdf-cell props "Languages"] [:pdf-cell props keywords]]
-     [[:pdf-cell props "Libraries"] [:pdf-cell props libs]]]))
+     [[:pdf-cell props "Clojure"] [:pdf-cell props libs]]]))
 
 (defn image-table [your-name your-phone your-email your-contact-links
                    your-address your-keywords your-libs your-image-file-name]
@@ -88,3 +109,21 @@
                      [2 2.5 3 4]]
                     (mapv create-referees-row referees))]
     [:paragraph {:indent 1.5} table]))
+
+(defn create-social-row [{:keys [year site desc link]}]
+  (assert year)
+  (assert site)
+  (assert desc)
+  (assert link)
+  [[:pdf-cell middle-props (img-f site)]
+   [:pdf-cell middle-props [:paragraph (make-anchor link desc)]]
+   ])
+
+(defn social-table [social]
+  (let [table (into [:pdf-table
+                     (assoc table-props :cell-border true
+                                        :horizontal-align :left
+                                        :width-percent 60)
+                     [1 8 1 8]]
+                    (mapv create-social-row social))]
+    [:paragraph {:indent-left (+ cc/narrow-indent 0) :indent-right cc/narrow-indent} table]))
