@@ -16,7 +16,7 @@
 
 (defn img-f [social]
   (condp = social
-    "so" (c/image-here "cv/apple-touch-icon.png" 11 0 -1)
+    "so" (c/image-here "cv/apple-touch-icon.png" 12 0 -4)
     "m" (c/image-here "cv/medium.png" 6 1 0)
     "gh" (c/image-here "cv/github-2.png" 1.6 0)
     "s" (c/image-here "cv/slack.png" 3 -3)))
