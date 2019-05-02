@@ -7,6 +7,7 @@
 (def third #(nth % 2))
 (def fourth #(nth % 3))
 (def fifth #(nth % 4))
+(def sixth #(nth % 5))
 
 (defn file-name->lines [file-name]
   (->> file-name

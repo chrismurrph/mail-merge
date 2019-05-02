@@ -11,7 +11,7 @@
 ;; Note to self: I've done paragraphs-4, but it is probably too wordy/technical, so keeping paragraphs-3 for now.
 ;; In Aug 2018 it became paragraphs-5.
 ;;
-(def cv-in-file-name "cv/paragraphs-5.md")
+(def cv-in-file-name "cv/paragraphs-6.md")
 (def cv-summary-in-file-name "cv/summary-info.md")
 (def cv-jobs-in-file-name "cv/jobs.edn")
 (def cv-referees-in-file-name "cv/referees.edn")
@@ -68,8 +68,8 @@
        ))
 
 (defn produce-cv []
-  (let [first-heading-fn (cc/insert-heading-narrow "Current Situation" 0)
-        second-heading-fn (cc/insert-page-break-heading-narrow "Clojure" 6)
+  (let [first-heading-fn (cc/insert-heading-narrow "Current Situation (Clojure)" 0)
+        second-heading-fn (cc/insert-page-break-heading-narrow "Recent Situation" 4)
         third-heading-fn (cc/insert-heading-narrow "About Myself" 11)
         fourth-heading-fn (cc/insert-heading-narrow "Social Media highlights" 13)
         {:keys [coy-logo coy-website coy-link-title personal-picture result-pdf]} (u/get-edn misc-in-file-name)
@@ -89,7 +89,7 @@
                                                  {:search-word "date periods" :op (cc/anchor-text->anchor long-version-f)}
                                                  {:search-word "bookkeeping project" :op (cc/anchor-text->anchor long-version-f)}
                                                  {:search-word "eight with a nine wing" :op (cc/anchor-text->anchor long-version-f)}])))
-                        (cc/insert-at 3 [:paragraph
+                        (cc/insert-at 6 [:paragraph
                                          {:indent cc/narrow-indent}
                                          (c/image-here coy-logo 20 0 -9)
                                          [:anchor (assoc cc/anchor-attributes :target coy-website) coy-link-title]
